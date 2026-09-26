@@ -2,19 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
-/* @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap'); */
 
-
-
-html {
+html, body {
   scroll-behavior: smooth;
+  background-color: #1F1E24;
 }
 
 .ripple {
   position: fixed;
   width: 100px;
   height: 100px;
-  background: #26b1a1;
+  background: rgba(255, 255, 255, 0.55);
   border-radius: 50%;
   transform: translate(-50%, -50%) scale(0);
   animation: ripple 0.6s linear;
@@ -79,8 +77,109 @@ body {
   );
 }
 
-.anton-regular {
-  font-family: "Anton", sans-serif;
+.butcherman-regular {
+  font-family: "Butcherman", system-ui;
   font-weight: 400;
   font-style: normal;
+}
+
+.hanalei-fill-regular {
+  font-family: "Hanalei Fill", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.peralta-regular {
+  font-family: "Peralta", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.anton-sc-regular {
+  font-family: "Anton SC", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.over-the-rainbow-regular {
+  font-family: "Over the Rainbow", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.monoton-regular {
+  font-family: "Monoton", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.bigelow-rules-regular {
+  font-family: "Bigelow Rules", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+.voltaire-regular {
+  font-family: "Voltaire", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.bebas-neue-regular {
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+
+.atma-light { font-family: "Atma", system-ui; font-weight: 300; font-style: normal; }
+.atma-regular { font-family: "Atma", system-ui; font-weight: 400; font-style: normal; }
+.atma-medium { font-family: "Atma", system-ui; font-weight: 500; font-style: normal; }
+.atma-semibold { font-family: "Atma", system-ui; font-weight: 600; font-style: normal; }
+.atma-bold { font-family: "Atma", system-ui; font-weight: 700; font-style: normal; }
+
+/* Native cursor hidden everywhere, no exceptions: CustomCursor.jsx draws the
+   brown hand instead. "*" with !important is used deliberately, not a list
+   of tags — Tailwind's cursor-pointer/cursor-* utilities set cursor directly
+   on an element, which otherwise beats the inherited "none" from html and
+   brings the OS pointer back on exactly the elements that carry them. Only
+   on fine pointers (mouse/trackpad); touch devices are untouched. */
+@media (pointer: fine) {
+  *, *::before, *::after {
+    cursor: none !important;
+  }
+}
+
+/* The page's own vertical scrollbar, hidden site-wide. Scrolling still works
+   via wheel, trackpad, touch and keyboard - only the visible track/thumb is
+   gone, since a native scrollbar can't be recolored or given a custom cursor
+   (it's browser chrome, not part of the DOM). */
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+}
+
+/* Utility for any element (like the Projects carousel track) that needs its
+   own scroll but no visible native scrollbar either. */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tools icons: spin + glow on hover, or permanently while selected (click).
+   Pure CSS :hover, so it can never get stuck on after the mouse leaves the
+   way a JS mouseenter/leave flag could when events raced each other. */
+.tool-icon {
+  transition: filter 0.25s ease;
+  filter: none;
+}
+.tool-icon:hover,
+.tool-icon.tool-active {
+  animation: spin 1.5s linear infinite;
+  filter: var(--tool-glow);
 }

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import { Home, Folder, Database, Pencil, } from "lucide-react"
 import { FaReact } from "react-icons/fa"
 import Ripple from "./components/Ripple"
@@ -11,6 +10,9 @@ import About from "./components/About"
 import Hero from "./components/Hero"
 import Header from "./components/Header"
 import ScrollArrow from "./components/ScrollArrow"
+import FlipStack from "./components/FlipStack"
+import WaterTrail from "./components/WaterTrail"
+import CustomCursor from "./components/CustomCursor"
 
 export default function App() {
 const [isOpen, setIsOpen] = useState(false)
@@ -24,6 +26,7 @@ const [projectsInView, setProjectsInView] = useState(false)
 const [expertiseInView, setExpertiseInView] = useState(false)
 const [toolsInView, setToolsInView] = useState(false)
 
+const pageBg = "linear-gradient(135deg, #1F1E24, #23241E)"
 
 // ABOUT
 const typedAboutHeading = useTypingEffect("About Me", 80, aboutInView)
@@ -82,7 +85,9 @@ const handleTouchEnd = (e) => {
  useEffect(() => {
   const handleScroll = () => {
     const expertiseSection = document.getElementById("expertise");
-    const expertisePosition = expertiseSection?.offsetTop || 0;
+    const expertisePosition = expertiseSection
+  ? expertiseSection.getBoundingClientRect().top + window.scrollY
+  : 0;
     const scrollY = window.scrollY || window.pageYOffset;
 
     // If we haven't scrolled PAST expertise, arrow goes down to #contact
@@ -156,8 +161,10 @@ function useTypingEffect(text, speed = 50, active = true) {
 return (
 <>
 <Ripple />
+<WaterTrail />
+<CustomCursor />
 
-<main className="min-h-screen anton-regular bg-[#5C5470] text-[#EDEDF2] scroll-smooth relative overflow-hidden">
+<main className="min-h-screen voltaire-regular text-[#EDEDF2] scroll-smooth relative overflow-x-clip" style={{ background: pageBg }}>
 <Header 
 backdropVariants={backdropVariants}
 isOpen={isOpen}
@@ -169,38 +176,14 @@ setIsOpen={setIsOpen}
 
 <Hero />
 
-<About
-typedAboutContent={typedAboutContent}
-typedAboutHeading={typedAboutHeading}
-setAboutInView={setAboutInView}
-sectionFade={sectionFade}
+<FlipStack background={pageBg} mapBg="/section-map-bg.svg"
+  pages={[
+    { id: "about", content: <About typedAboutContent={typedAboutContent} typedAboutHeading={typedAboutHeading} setAboutInView={setAboutInView} sectionFade={sectionFade} /> },
+    { id: "tools", onActiveChange: setToolsInView, content: <Tools setToolDescription={setToolDescription} toolDescription={toolDescription} typedToolsHeading={typedToolsHeading} sectionFade={sectionFade} /> },
+    { id: "expertise", onActiveChange: setExpertiseInView, content: <Expertise expertiseList={expertiseList} sectionFade={sectionFade} typedExpertiseHeading={typedExpertiseHeading} /> },
+    { id: "projects", onActiveChange: setProjectsInView, content: <Projects sectionFade={sectionFade} typedProjectsHeading={typedProjectsHeading} handleTouchStart={handleTouchStart} handleTouchEnd={handleTouchEnd} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} /> },
+  ]}
 />
-
-<Tools 
-setToolDescription={setToolDescription}
-toolDescription={toolDescription}
-typedToolsHeading={typedToolsHeading}
-sectionFade={sectionFade}
-setToolsInView={setToolsInView}
-/>
-
-<Expertise 
-setExpertiseInView={setExpertiseInView}
-expertiseList={expertiseList}
-sectionFade={sectionFade}
-typedExpertiseHeading={typedExpertiseHeading}
-/>
-
-<Projects 
-sectionFade={sectionFade}
-typedProjectsHeading={typedProjectsHeading}
-handleTouchStart={handleTouchStart}
-handleTouchEnd={handleTouchEnd}
-currentIndex={currentIndex}
-setProjectsInView={setProjectsInView}
-setCurrentIndex={setCurrentIndex}
-/>
-
 <Footer time={time} />
 </main>
 

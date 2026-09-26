@@ -1,112 +1,170 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-export default function Projects(props){
-    return(
-        <>
-        
-<motion.section
-  id="projects"
-  variants={props.sectionFade}
-  initial="hidden"
-  whileInView="visible"
-   onViewportEnter={() => props.setProjectsInView(true)}
-  viewport={{ once: false, amount: 0.4 }}
-  style={{
-  backgroundImage: "url('/sectionsvg.png')",
-  backgroundRepeat: "no-repeat",
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-}}
+// The first entry is real. The other four are placeholders until you have
+// screenshots and logos for them — set "image" to a real src and the
+// "Coming soon" placeholder disappears automatically.
+const PROJECTS = [
+  {
+    name: "DuetDays",
+    desc: "A productivity tracker built with React & Supabase. Includes user auth, real-time tasks, SEO indexing.",
+    link: "https://duet-days.lovable.app/",
+    image: "/duetdays.jpg",
+  },
+  { name: "#2", desc: "Patience is a Virtue.", link: null, image: null },
+  { name: "#3", desc: "Patience is a Virtue.", link: null, image: null },
+  { name: "#4", desc: "Patience is a Virtue.", link: null, image: null },
+  { name: "#5", desc: "Patience is a Virtue.", link: null, image: null },
+];
 
-  className="relative px-6 py-12 max-w-3xl mx-auto bg-[#3a354add] rounded-lg shadow mb-12 overflow-hidden z-10"
->
-  {/* CORNER LINES */}
-  <span className="absolute top-0 left-0 w-12 h-0.5 bg-[#EDEDF2] rounded-full translate-x-2 translate-y-2"></span>
-  <span className="absolute top-0 left-0 h-12 w-0.5 bg-[#EDEDF2] rounded-full translate-x-2 translate-y-2"></span>
-  <span className="absolute bottom-0 right-0 w-12 h-0.5 bg-[#EDEDF2] rounded-full -translate-x-2 -translate-y-2"></span>
-  <span className="absolute bottom-0 right-0 h-12 w-0.5 bg-[#EDEDF2] rounded-full -translate-x-2 -translate-y-2"></span>
+export default function Projects(props) {
+  const trackRef = useRef(null);
+  const sliderRef = useRef(null);
+  const dragging = useRef(false);
 
- <motion.h3
-  variants={props.sectionFade}
-  className="text-2xl font-semibold text-zinc-100 mb-8 text-center"
->
-  {props.typedProjectsHeading}
-</motion.h3>
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+  const [progress, setProgress] = useState(0); // 0-1, drives the volume-dial knob
 
+  const syncFromScroll = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setAtStart(el.scrollLeft <= 4);
+    setAtEnd(el.scrollLeft >= max - 4);
+    setProgress(max > 0 ? el.scrollLeft / max : 0);
+  };
 
-  <div className="flex items-center justify-center gap-6 mb-8 relative">
-    <button
-      onClick={() =>
-        props.setCurrentIndex((prev) => (prev === 0 ? 2 : prev - 1))
-      }
-      className="text-white text-3xl hover:text-[#26b1a1] transition"
-    >
-      {"<"}
-    </button>
+  useEffect(() => {
+    syncFromScroll();
+    const el = trackRef.current;
+    el.addEventListener("scroll", syncFromScroll, { passive: true });
+    window.addEventListener("resize", syncFromScroll);
+    return () => {
+      el.removeEventListener("scroll", syncFromScroll);
+      window.removeEventListener("resize", syncFromScroll);
+    };
+  }, []);
 
-    <div
-      className="w-full max-w-md overflow-hidden relative rounded-lg"
-      onTouchStart={props.handleTouchStart}
-      onTouchEnd={props.handleTouchEnd}
-    >
-      <div
-        className="flex transition-transform duration-500 ease-in-out"
-        style={{ transform: `translateX(-${props.currentIndex * 100}%)` }}
+  // Netflix-style arrows: only show the ones that would actually do something
+  const scrollByPage = (dir) => {
+    const el = trackRef.current;
+    el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: "smooth" });
+  };
+
+  // dragging the volume-dial knob scrubs the carousel directly
+  const setFromClientX = (clientX) => {
+    const rect = sliderRef.current.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    const el = trackRef.current;
+    el.scrollLeft = ratio * (el.scrollWidth - el.clientWidth);
+  };
+
+  useEffect(() => {
+    const onMove = (e) => dragging.current && setFromClientX(e.clientX);
+    const onUp = () => (dragging.current = false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
+  return (
+    <motion.section variants={props.sectionFade} className="relative w-full py-12 z-10">
+      <motion.h3
+        variants={props.sectionFade}
+        className="text-2xl bebas-neue-regular text-zinc-100 mb-8 text-center px-6"
       >
-        {[1, 2, 3].map((num) => (
-          <img
-            key={num}
-            src={`/dd${num}.png`}
-            alt={`DuetDays Mockup ${num}`}
-            className="w-full flex-shrink-0 rounded-lg object-cover"
-          />
-        ))}
+        {props.typedProjectsHeading}
+      </motion.h3>
+
+      <div className="relative">
+        {!atStart && (
+          <button
+            onClick={() => scrollByPage(-1)}
+            aria-label="Previous project"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white text-xl flex items-center justify-center"
+          >
+            ‹
+          </button>
+        )}
+
+        {/* the name label sits in normal flow above the image and never
+            moves on its own - only the image below scales on hover, so
+            nothing can climb up into the heading above the carousel */}
+        <div
+          ref={trackRef}
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none gap-1 px-1 scroll-smooth"
+        >
+          {PROJECTS.map((p, i) => (
+            <div key={i} className="snap-start shrink-0 w-[46vw] sm:w-[420px]">
+              <p className="text-xs tracking-widest uppercase text-zinc-300 mb-2 px-1">
+                {p.name}
+              </p>
+
+              <div className="group relative h-[68vh] max-h-[640px] overflow-hidden bg-[#2C2F34]">
+                {p.image ? (
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-xl atma-semibold text-[#E4572E] text-center px-4">
+                      COMING SOON ❗
+                    </span>
+                  </div>
+                )}
+
+                {/* narration overlaid on the image itself, bottom edge */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 pt-10">
+                  <p className="text-sm text-zinc-100">{p.desc}</p>
+                  {p.link && (
+                    <a
+                      href={p.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#E4572E] hover:underline text-sm inline-block mt-1"
+                    >
+                      View Live
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {!atEnd && (
+          <button
+            onClick={() => scrollByPage(1)}
+            aria-label="Next project"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white text-xl flex items-center justify-center"
+          >
+            ›
+          </button>
+        )}
       </div>
-    </div>
 
-    <button
-      onClick={() =>
-        props.setCurrentIndex((prev) => (prev === 2 ? 0 : prev + 1))
-      }
-      className="text-white text-3xl hover:text-[#26b1a1] transition"
-    >
-      {">"}
-    </button>
-  </div>
-
-  <motion.div
-    whileHover={{
-      scale: 1.02,
-      boxShadow:
-        "0 0 20px rgba(38, 177, 161, 0.4), 0 0 40px rgba(38, 177, 161, 0.4)",
-      borderColor: "#26b1a1",
-    }}
-    whileTap={{
-      scale: 1.02,
-      boxShadow:
-        "0 0 20px rgba(38, 177, 161, 0.4), 0 0 40px rgba(38, 177, 161, 0.4)",
-      borderColor: "#26b1a1",
-    }}
-    transition={{ duration: 0.4 }}
-    className="bg-[#5A5270] p-4 rounded text-center"
-  >
-    <h4 className="text-xl font-semibold text-zinc-100">
-      DuetDays App
-    </h4>
-    <p className="text-zinc-200 mt-2">
-      A productivity tracker built with React & Supabase. Includes user
-      auth, real-time tasks, SEO indexing.
-    </p>
-    <a
-      href="https://preview--duet-days.lovable.app"
-      target="_blank"
-      className="text-[#26b1a1] hover:underline mt-2 inline-block"
-    >
-      View Live
-    </a>
-  </motion.div>
-</motion.section>
-        </>
-    )
+      {/* custom scrubber replacing the native scrollbar entirely: cold blue
+          (left) to hot orange (right). A plain div + drag handlers, not a
+          native <input>, so nothing here can ever show the OS cursor. */}
+      <div
+        ref={sliderRef}
+        onMouseDown={(e) => {
+          dragging.current = true;
+          setFromClientX(e.clientX);
+        }}
+        className="relative mx-auto mt-6 h-2 w-48 rounded-full"
+        style={{ background: "linear-gradient(to right, #4FA3D1, #E4572E)" }}
+      >
+        <div
+className="absolute top-1/2 w-4 h-4 rounded-full bg-[#1F1E24] border border-[#6d697e] shadow"          style={{ left: `calc(${progress * 100}% - 8px)`, transform: "translateY(-50%)" }}
+        />
+      </div>
+    </motion.section>
+  );
 }

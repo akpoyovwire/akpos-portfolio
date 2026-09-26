@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Mail, Github, Linkedin,} from "lucide-react";
+import { Mail, Github, Linkedin } from "lucide-react";
 import { FaMedium } from "react-icons/fa";
 
 export default function Footer(props){
@@ -8,27 +8,24 @@ export default function Footer(props){
         <>
         
 
-<footer className="relative flex flex-col items-center justify-center overflow-hidden text-[#EDEDF2]">
-  {/* BACKGROUND IMAGE */}
-  <div className="relative w-full">
+<footer id="footer" className="relative flex flex-col items-center justify-center overflow-hidden text-[#EDEDF2]">
+  {/* BACKGROUND IMAGE: the height now lives on this wrapper, not the <img>,
+      so "h-full" on the image actually has something to size against */}
+  <div className="relative w-full min-h-[550px] lg:h-[600px]">
     <img
       src="/footer.jpg"
       alt="Footer Background"
-      className="w-full h-full object-cover opacity-40 min-h-[550px] lg:h-[600px]"
-      style={{ zIndex: 0 }}
+      className="absolute inset-0 w-full h-full object-cover opacity-65"
     />
 
     {/* CONTENT with slide-up */}
     <motion.div
-      id="footer"
+     
       className="absolute inset-0 flex flex-col items-center justify-center px-8 py-12"
-      initial={{ y: 100, opacity: 0 }}
-      whileInView={{ y: 0, opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 1, ease: "easeOut" }}
+     
     >
             {/* CLOCK FIRST */}
-      <div className="text-center text-3xl font-bold mb-6">
+      <div className="text-center text-4xl bebas-neue-regular mb-6">
         {props.time}
       </div>
 
@@ -38,7 +35,7 @@ export default function Footer(props){
           <React.Fragment key={idx}>
             <a
               href={`#${tab.toLowerCase()}`}
-              className="py-2 px-4 hover:text-[#26b1a1] transition"
+              className="py-2 px-4 hover:text-[#E4572E] transition"
             >
               {tab}
             </a>
@@ -87,7 +84,7 @@ export default function Footer(props){
             key={idx}
             href={link.href}
             target="_blank"
-            className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#26b1a1]"
+            className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#E4572E]"
             initial={{ opacity: 0, y: link.slideFrom === "top" ? -50 : 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
@@ -111,7 +108,7 @@ export default function Footer(props){
       </motion.div>
 
       {/* COPYRIGHT + CLOCK */}
-      <div className="text-center text-sm">
+      <div className="text-center text-sm ">
         &copy; {new Date().getFullYear()} AkposWorld. All rights reserved.
         <br />
         
@@ -120,7 +117,7 @@ export default function Footer(props){
   </div>
 
   {/* THIN FINAL STRIP */}
-  <div className="w-full text-center text-sm py-4 border-t border-[#282538] bg-[#282538]"></div>
+  <div className="w-full text-center text-sm py-4 border-t border-[#1F1E24] bg-[#1F1E24]"></div>
 </footer>
 
 </>

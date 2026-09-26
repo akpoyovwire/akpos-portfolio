@@ -1,129 +1,97 @@
-import React from "react"
-import { motion } from "framer-motion"
+import React, { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Database } from "lucide-react"
 import { FaHtml5, FaCss3Alt, FaJsSquare, FaReact } from "react-icons/fa"
 
-export default function Tools(props){
-    return(
-        <>
-        
-        {/* TOOLS */}
-        <motion.section
-          id="tools"
-          variants={props.sectionFade}
-          initial="hidden"
-          whileInView="visible"
-          onViewportEnter={() => props.setToolsInView(true)}
-          viewport={{ once: false, amount: 0.4 }}
-          className="px-6 py-12 max-w-3xl mx-auto relative z-10 anton-regular"
-        >
-         <motion.h3
-          variants={props.sectionFade}
-          className="text-2xl font-semibold text-zinc-100 mb-4 text-center"
-        >
-          {props.typedToolsHeading}
-        </motion.h3>
-        
-          <div className="flex flex-col gap-8 items-center">
-            {[
-              {
-                icon: <FaHtml5 size={30} color="#E34F26" />,
-                shadow: "rgba(227, 79, 38, 0.6)",
-                border: "#E34F26",
-                desc:
-                  "I use HTML to craft clean, accessible structure for modern, user-friendly websites.",
-              },
-              {
-                icon: <FaCss3Alt size={30} color="#1572B6" />,
-                shadow: "rgba(21, 114, 182, 0.6)",
-                border: "#1572B6",
-                desc:
-                  "With the utilisation of CSS I am able to style interfaces with responsive, elegant, and engaging visuals.",
-              },
-              {
-                icon: <FaJsSquare size={30} color="#F7DF1E" />,
-                shadow: "rgba(247, 223, 30, 0.6)",
-                border: "#F7DF1E",
-                desc: "Using JavaScipt, I bring pages to life with dynamic, interactive features.",
-              },
-              {
-                icon: <FaReact size={30} color="#61DBFB" />,
-                shadow: "rgba(97, 219, 251, 0.6)",
-                border: "#61DBFB",
-                desc: "React helps me I build fast, scalable frontends with reusable components.",
-              },
-              {
-                icon: <Database size={30} color="#2DD4BF" />,
-                shadow: "rgba(45, 212, 191, 0.6)",
-                border: "#2DD4BF",
-                desc: "I connect secure backends with real-time data and auth.",
-              },
-            ].map(({ icon, shadow, border, desc }, i) => (
-              <motion.div key={i} className="flex flex-col items-center anton-regular">
-                <motion.a
-                  onClick={() => props.setToolDescription(i === props.toolDescription ? null : i)}
-                  whileHover={{
-                    rotate: [0, 360],
-                    transition: { repeat: Infinity, ease: "linear", duration: 1.5 },
-                    filter: `drop-shadow(0 0 12px ${shadow})`,
-                    scale: 1,
-                  }}
-                  animate={
-                    props.toolDescription === i
-                      ? {
-                          rotate: [0, 360],
-                          transition: {
-                            repeat: Infinity,
-                            ease: "linear",
-                            duration: 1.5,
-                          },
-                          filter: `drop-shadow(0 0 12px ${shadow})`,
-                          scale: 1,
-                        }
-                      : { rotate: 0, filter: "none", scale: 1 }
-                  }
-                  className="inline-flex items-center justify-center w-16 h-16 rounded-full cursor-pointer"
-                  style={{
-                    border: `2px solid ${border}`,
-                    backgroundColor: "#5C5470",
-                  }}
-                >
-                  {icon}
-                </motion.a>
-                {props.toolDescription === i && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                      transition: {
-                        type: "spring",
-                        stiffness: 80,   // Lower stiffness = smoother
-                        damping: 15,     // More damping = smoother stop
-                        mass: 0.5,       // Lower mass for gentle effect
-                      },
-                    }}
-                    exit={{
-                      opacity: 0,
-                      y: -20,
-                      transition: {
-                        duration: 0.4,
-                        ease: "easeInOut",
-                      },
-                    }}
-                    className="mt-2 relative px-4 py-2 text-sm bg-white/20 backdrop-blur-md rounded-lg shadow-lg anton-regular"
-                  >
-                    {/* Left pillar with your custom color */}
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#26b1a1] rounded" />
-        
-                    <div className="pl-4 pr-3 text-left">{desc}</div>
-                  </motion.div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-        
-        </>
-    )
+const TOOLS = [
+  {
+    icon: <FaHtml5 size={30} color="#E34F26" />,
+    shadow: "rgba(227, 79, 38, 0.6)",
+    border: "#E34F26",
+    desc: "I use HTML to craft clean, accessible structure for modern, user-friendly websites.",
+  },
+  {
+    icon: <FaCss3Alt size={30} color="#1572B6" />,
+    shadow: "rgba(21, 114, 182, 0.6)",
+    border: "#1572B6",
+    desc: "With the utilisation of CSS I am able to style interfaces with responsive, elegant, and engaging visuals.",
+  },
+  {
+    icon: <FaJsSquare size={30} color="#F7DF1E" />,
+    shadow: "rgba(247, 223, 30, 0.6)",
+    border: "#F7DF1E",
+    desc: "Using JavaScript, I bring pages to life with dynamic, interactive features.",
+  },
+  {
+    icon: <FaReact size={30} color="#61DBFB" />,
+    shadow: "rgba(97, 219, 251, 0.6)",
+    border: "#61DBFB",
+    desc: "React helps me build fast, scalable frontends with reusable components.",
+  },
+  {
+    icon: <Database size={30} color="#43bc88" />,
+    shadow: "rgba(91, 141, 184, 0.6)",
+    border: "#43bc88",
+    desc: "I connect secure backends with real-time data and auth.",
+  },
+]
+
+export default function Tools(props) {
+  const selected = props.toolDescription
+
+  return (
+    <motion.section
+      variants={props.sectionFade}
+      className="px-6 py-12 max-w-4xl mx-auto relative z-10"
+    >
+      <motion.h3
+        variants={props.sectionFade}
+        className="text-2xl bebas-neue-regular text-zinc-100 mb-8 text-center"
+      >
+        {props.typedToolsHeading}
+      </motion.h3>
+
+      {/* Spin + glow are pure CSS now (see .tool-icon in index.css), driven
+          by :hover and a toggled class - not JS mouseenter/leave state.
+          A real CSS :hover can never get "stuck" the way a JS-tracked
+          hover flag can when enter/leave events race each other, which is
+          what was leaving some icons glowing after the mouse had left. */}
+      <div className="flex flex-row flex-wrap items-start justify-center gap-6 md:gap-10">
+        {TOOLS.map(({ icon, shadow, border }, i) => (
+          <a
+            key={i}
+            onClick={() => props.setToolDescription(i === selected ? null : i)}
+            className={`tool-icon flex-shrink-0 inline-flex items-center justify-center w-16 h-16 rounded-full cursor-pointer ${
+              selected === i ? "tool-active" : ""
+            }`}
+            style={{
+              border: `2px solid ${border}`,
+              backgroundColor: "#2C2F34",
+              "--tool-glow": `drop-shadow(0 0 12px ${shadow})`,
+            }}
+          >
+            {icon}
+          </a>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        {selected !== null && (
+          <motion.div
+            key={selected}
+            initial={{ opacity: 0, height: 0, y: -8 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
+            className="overflow-hidden mt-6"
+          >
+            <div className="relative mx-auto max-w-xl px-5 py-3 bg-white/10 backdrop-blur-md rounded-lg shadow-lg">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#E4572E] rounded" />
+              <p className="pl-4 pr-2 text-sm text-left">{TOOLS[selected].desc}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.section>
+  )
 }

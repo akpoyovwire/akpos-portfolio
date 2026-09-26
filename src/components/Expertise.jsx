@@ -8,17 +8,12 @@ export default function Expertise(props){
         <>
         {/* EXPERTISE */}
       <motion.section
-        id="expertise"
         variants={props.sectionFade}
-        initial="hidden"
-        whileInView="visible"
-        onViewportEnter={() => props.setExpertiseInView(true)}
-        viewport={{ once: false, amount: 0.4 }}
         className="px-6 py-12 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10"
-      >
+     >
          <motion.h3
   variants={props.sectionFade}
-  className="text-2xl font-semibold mb-4 text-center col-span-full"
+  className="text-2xl bebas-neue-regular mb-4 text-center col-span-full"
 >
   {props.typedExpertiseHeading}
 </motion.h3>
