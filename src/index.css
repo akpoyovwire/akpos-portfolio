@@ -161,7 +161,7 @@ html::-webkit-scrollbar {
   display: none;
 }
 
-/* Utility for any element (like the Projects carousel track) that needs its
+/* Utility for any element (like the work carousel track) that needs its
    own scroll but no visible native scrollbar either. */
 .scrollbar-none {
   scrollbar-width: none;

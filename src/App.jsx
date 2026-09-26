@@ -3,7 +3,7 @@ import { Home, Folder, Database, Pencil, } from "lucide-react"
 import { FaReact } from "react-icons/fa"
 import Ripple from "./components/Ripple"
 import Footer from "./components/Footer"
-import Projects from "./components/Projects"
+import Works from "./components/Works"
 import Expertise from "./components/Expertise"
 import Tools from "./components/Tools"
 import About from "./components/About"
@@ -22,7 +22,7 @@ const [currentIndex, setCurrentIndex] = useState(0)
 const [touchStartX, setTouchStartX] = useState(null)
 const [time, setTime] = useState("")
 const [aboutInView, setAboutInView] = useState(false)
-const [projectsInView, setProjectsInView] = useState(false)
+const [worksInView, setworksInView] = useState(false)
 const [expertiseInView, setExpertiseInView] = useState(false)
 const [toolsInView, setToolsInView] = useState(false)
 
@@ -36,8 +36,8 @@ const typedAboutContent = useTypingEffect(
   aboutInView
 )
 
-// PROJECTS
-const typedProjectsHeading = useTypingEffect("Projects", 80, projectsInView)
+// WORKS
+const typedworksHeading = useTypingEffect("works", 80, worksInView)
 
 // EXPERTISE
 const typedExpertiseHeading = useTypingEffect("Expertise", 80, expertiseInView)
@@ -181,7 +181,7 @@ setIsOpen={setIsOpen}
     { id: "about", content: <About typedAboutContent={typedAboutContent} typedAboutHeading={typedAboutHeading} setAboutInView={setAboutInView} sectionFade={sectionFade} /> },
     { id: "tools", onActiveChange: setToolsInView, content: <Tools setToolDescription={setToolDescription} toolDescription={toolDescription} typedToolsHeading={typedToolsHeading} sectionFade={sectionFade} /> },
     { id: "expertise", onActiveChange: setExpertiseInView, content: <Expertise expertiseList={expertiseList} sectionFade={sectionFade} typedExpertiseHeading={typedExpertiseHeading} /> },
-    { id: "projects", onActiveChange: setProjectsInView, content: <Projects sectionFade={sectionFade} typedProjectsHeading={typedProjectsHeading} handleTouchStart={handleTouchStart} handleTouchEnd={handleTouchEnd} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} /> },
+    { id: "works", onActiveChange: setworksInView, content: <Works sectionFade={sectionFade} typedworksHeading={typedworksHeading} handleTouchStart={handleTouchStart} handleTouchEnd={handleTouchEnd} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} /> },
   ]}
 />
 <Footer time={time} />

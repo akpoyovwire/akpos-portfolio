@@ -29,8 +29,10 @@ export default function CustomCursor() {
     const isCoarse = window.matchMedia("(pointer: coarse)").matches
 
     if (isCoarse) {
-      // Touch: snap straight to each tap, no easing - there's no continuous
-      // pointer position to lerp toward between taps.
+      // Touch: moves to each tap/drag point with a short CSS transition -
+      // smooth motion, but fast enough (120ms) that it never reads as a
+      // delay the way the desktop easing (FOLLOW) deliberately does.
+      el.style.transition = "transform 0.12s ease-out"
       const place = (x, y) => {
         setVisible(true)
         el.style.transform = `translate(${x - HOTSPOT_NORMAL.x}px, ${y - HOTSPOT_NORMAL.y}px)`
@@ -52,6 +54,7 @@ export default function CustomCursor() {
     }
 
     // Desktop/trackpad: ease toward the real mouse every frame
+    el.style.transition = "none"
     let target = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
     let pos = { ...target }
     let hovering = false

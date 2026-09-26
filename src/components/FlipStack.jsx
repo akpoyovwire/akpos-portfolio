@@ -111,6 +111,27 @@ function FlipPage({ index, count, progress, background, mapBg, onActiveChange, c
 export default function FlipStack({ pages, background = "#1F1E24", mapBg }) {
   const runwayRef = useRef(null)
   const stageRef = useRef(null)
+  const smoothRaf = useRef(null)
+
+  // A hand-rolled eased scroll, replacing window.scrollTo({behavior:"smooth"}).
+  // The browser's own "smooth" scroll is close to constant-speed in most
+  // engines, which is exactly what reads as rigid/mechanical rather than a
+  // real ease. This ramps up and back down (cubic ease-in-out) over a fixed
+  // duration instead.
+  const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+  const smoothScrollTo = (targetY, duration = 420) => {
+    if (smoothRaf.current) cancelAnimationFrame(smoothRaf.current)
+    const startY = window.scrollY
+    const delta = targetY - startY
+    const startTime = performance.now()
+    const step = (now) => {
+      const t = Math.min(1, (now - startTime) / duration)
+      window.scrollTo({ top: startY + delta * easeInOutCubic(t), behavior: "auto" })
+      if (t < 1) smoothRaf.current = requestAnimationFrame(step)
+      else smoothRaf.current = null
+    }
+    smoothRaf.current = requestAnimationFrame(step)
+  }
   const count = pages.length
   const progress = useMotionValue(0)
 
@@ -142,8 +163,42 @@ export default function FlipStack({ pages, background = "#1F1E24", mapBg }) {
   // there "10% into the transition" means 10% of one screen height past
   // the boundary, which lines up with where the sticky stage naturally
   // engages/releases.
+  // Snap-on-idle, in three zones: inside the flip stack (page to page),
+  // and at the two edges where it meets plain-scrolling content - Hero
+  // above and Footer below. Direction-aware: the commit decision is based
+  // on which way the user was actually scrolling when they stopped, not
+  // just where they landed. Scrolling up into the previous page's segment
+  // starts near that segment's *top* edge (local close to 1) and only
+  // approaches 0 the further up you go - a direction-blind "local past a
+  // threshold counts as forward" check treated that as "still near the
+  // forward edge" and snapped straight back to the page being left,
+  // meaning any upward scroll short of nearly the entire page's height got
+  // silently undone. Tracking scroll direction and asking "have you moved
+  // more than the threshold away from the edge you started at" fixes that
+  // for both directions.
+  const dirRef = useRef(1) // 1 = last moved down, -1 = last moved up
+  const lastYRef = useRef(0)
+
+  useEffect(() => {
+    lastYRef.current = window.scrollY
+    const onDir = () => {
+      const y = window.scrollY
+      if (y !== lastYRef.current) dirRef.current = y > lastYRef.current ? 1 : -1
+      lastYRef.current = y
+    }
+    window.addEventListener("scroll", onDir, { passive: true })
+    return () => window.removeEventListener("scroll", onDir)
+  }, [])
+
   useEffect(() => {
     let idleTimer
+
+    // local: 0 at the "backward" edge, 1 at the "forward" edge.
+    // Commits forward once you've moved SNAP_THRESHOLD past whichever edge
+    // you approached from, based on dirRef; otherwise commits backward.
+    const pickForward = (local) =>
+      dirRef.current >= 0 ? local > SNAP_THRESHOLD : local >= 1 - SNAP_THRESHOLD
+
     const trySnap = () => {
       const runway = runwayRef.current
       const stage = stageRef.current
@@ -160,8 +215,8 @@ export default function FlipStack({ pages, background = "#1F1E24", mapBg }) {
         const segIndex = Math.min(count - 2, Math.max(0, Math.floor(v / seg + 1e-6)))
         const local = (v - segIndex * seg) / seg
         if (local >= 0.02 && local <= 0.98) {
-          const targetV = local > SNAP_THRESHOLD ? (segIndex + 1) * seg : segIndex * seg
-          window.scrollTo({ top: runwayTop + targetV * distance, behavior: "smooth" })
+          const targetV = pickForward(local) ? (segIndex + 1) * seg : segIndex * seg
+          smoothScrollTo(runwayTop + targetV * distance)
           return
         }
       }
@@ -170,10 +225,7 @@ export default function FlipStack({ pages, background = "#1F1E24", mapBg }) {
       const heroLow = runwayTop - vh // Hero fills the screen
       const heroLocal = (window.scrollY - heroLow) / vh
       if (heroLocal > 0.02 && heroLocal < 0.98) {
-        window.scrollTo({
-          top: heroLocal > SNAP_THRESHOLD ? runwayTop : heroLow,
-          behavior: "smooth",
-        })
+        smoothScrollTo(pickForward(heroLocal) ? runwayTop : heroLow)
         return
       }
 
@@ -181,10 +233,7 @@ export default function FlipStack({ pages, background = "#1F1E24", mapBg }) {
       const projLow = runwayTop + runwayHeight - vh // last page fills the screen
       const projLocal = (window.scrollY - projLow) / vh
       if (projLocal > 0.02 && projLocal < 0.98) {
-        window.scrollTo({
-          top: projLocal > SNAP_THRESHOLD ? projLow + vh : projLow,
-          behavior: "smooth",
-        })
+        smoothScrollTo(pickForward(projLocal) ? projLow + vh : projLow)
       }
     }
     const onScroll = () => {

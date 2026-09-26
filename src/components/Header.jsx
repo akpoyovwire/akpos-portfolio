@@ -29,7 +29,7 @@ export default function Header(props){
     </text>
   </svg>
 </h1>        <ul className="hidden md:flex gap-6 text-sm items-center">
-          {["home", "about", "tools", "expertise","projects"].map((item, idx) => (
+          {["home", "about", "tools", "expertise","works"].map((item, idx) => (
            <motion.li
         key={idx}
         whileHover={{ scale: 1.1 }}
@@ -39,7 +39,7 @@ export default function Header(props){
               {item === "home" && <Home size={16} />}
               {item === "about" && <User size={16} />}
               {item === "tools" && <Database size={16} />}
-              {item === "projects" && <Folder size={16} />}
+              {item === "works" && <Folder size={16} />}
               {item == "expertise" && <HatGlasses size={16} />}
               <a href={`#${item}`}>
                 {item.charAt(0).toUpperCase() + item.slice(1)}
@@ -77,7 +77,7 @@ export default function Header(props){
   className="fixed top-0 left-0 h-full w-64 bg-[#1F1E24]/90 backdrop-blur-lg shadow-lg flex flex-col gap-6 p-6 border-r border-[#2C2F34] z-40 text-white"
 >
 
-  {["home", "about", "tools", "expertise", "projects"].map((item, idx) => (
+  {["home", "about", "tools", "expertise", "works"].map((item, idx) => (
     <a
       key={idx}
       href={`#${item}`}
@@ -87,7 +87,7 @@ export default function Header(props){
       {item === "home" && <Home size={20} />}
       {item === "about" && <User size={20} />}
       {item === "tools" && <Database size={20} />}
-      {item === "projects" && <Folder size={20} />}
+      {item === "works" && <Folder size={20} />}
       {item === "expertise" && <HatGlasses size={20} />}
       {item.charAt(0).toUpperCase() + item.slice(1)}
     </a>

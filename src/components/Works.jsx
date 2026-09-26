@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 // The first entry is real. The other four are placeholders until you have
 // screenshots and logos for them — set "image" to a real src and the
 // "Coming soon" placeholder disappears automatically.
-const PROJECTS = [
+const WORKS = [
   {
     name: "DuetDays",
     desc: "A productivity tracker built with React & Supabase. Includes user auth, real-time tasks, SEO indexing.",
@@ -17,7 +17,7 @@ const PROJECTS = [
   { name: "#5", desc: "Patience is a Virtue.", link: null, image: null },
 ];
 
-export default function Projects(props) {
+export default function Works(props) {
   const trackRef = useRef(null);
   const sliderRef = useRef(null);
   const dragging = useRef(false);
@@ -63,11 +63,22 @@ export default function Projects(props) {
   useEffect(() => {
     const onMove = (e) => dragging.current && setFromClientX(e.clientX);
     const onUp = () => (dragging.current = false);
+    const onTouchMove = (e) => {
+      if (!dragging.current) return;
+      e.preventDefault();
+      setFromClientX(e.touches[0].clientX);
+    };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
+    // passive:false so we can preventDefault - otherwise the page itself
+    // tries to scroll vertically while a finger is dragging the knob
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onUp);
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onUp);
     };
   }, []);
 
@@ -77,14 +88,14 @@ export default function Projects(props) {
         variants={props.sectionFade}
         className="text-2xl bebas-neue-regular text-zinc-100 mb-6 text-center px-6"
       >
-        {props.typedProjectsHeading}
+        {props.typedworksHeading}
       </motion.h3>
 
       <div className="relative">
         {!atStart && (
           <button
             onClick={() => scrollByPage(-1)}
-            aria-label="Previous project"
+            aria-label="Previous work"
             className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white text-xl flex items-center justify-center"
           >
             ‹
@@ -99,7 +110,7 @@ export default function Projects(props) {
           className="flex overflow-x-auto scrollbar-none gap-1 px-1"
           style={{ scrollBehavior: "auto" }}
         >
-          {PROJECTS.map((p, i) => (
+          {WORKS.map((p, i) => (
             <div key={i} className="shrink-0 w-[46vw] sm:w-[420px]">
               <p className="text-xs tracking-widest uppercase text-zinc-300 mb-2 px-1">
                 {p.name}
@@ -142,7 +153,7 @@ export default function Projects(props) {
         {!atEnd && (
           <button
             onClick={() => scrollByPage(1)}
-            aria-label="Next project"
+            aria-label="Next work"
             className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white text-xl flex items-center justify-center"
           >
             ›
@@ -159,7 +170,11 @@ export default function Projects(props) {
           dragging.current = true;
           setFromClientX(e.clientX);
         }}
-        className="relative mx-auto mt-4 h-2 w-48 rounded-full"
+        onTouchStart={(e) => {
+          dragging.current = true;
+          setFromClientX(e.touches[0].clientX);
+        }}
+        className="relative mx-auto mt-4 h-3 w-72 max-w-[85vw] rounded-full touch-none"
         style={{ background: "linear-gradient(to right, #4FA3D1, #E4572E)" }}
       >
         <div

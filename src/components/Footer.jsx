@@ -31,7 +31,7 @@ export default function Footer(props){
 
       {/* Vertical Nav */}
       <div className="flex flex-col items-center mb-8">
-        {["Home", "About", "Tools", "Projects"].map((tab, idx) => (
+        {["Home", "About", "Tools", "Works"].map((tab, idx) => (
           <React.Fragment key={idx}>
             <a
               href={`#${tab.toLowerCase()}`}
