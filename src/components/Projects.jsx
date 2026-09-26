@@ -72,10 +72,10 @@ export default function Projects(props) {
   }, []);
 
   return (
-    <motion.section variants={props.sectionFade} className="relative w-full py-12 z-10">
+    <motion.section variants={props.sectionFade} className="relative w-full py-8 z-10">
       <motion.h3
         variants={props.sectionFade}
-        className="text-2xl bebas-neue-regular text-zinc-100 mb-8 text-center px-6"
+        className="text-2xl bebas-neue-regular text-zinc-100 mb-6 text-center px-6"
       >
         {props.typedProjectsHeading}
       </motion.h3>
@@ -96,15 +96,16 @@ export default function Projects(props) {
             nothing can climb up into the heading above the carousel */}
         <div
           ref={trackRef}
-          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none gap-1 px-1 scroll-smooth"
+          className="flex overflow-x-auto scrollbar-none gap-1 px-1"
+          style={{ scrollBehavior: "auto" }}
         >
           {PROJECTS.map((p, i) => (
-            <div key={i} className="snap-start shrink-0 w-[46vw] sm:w-[420px]">
+            <div key={i} className="shrink-0 w-[46vw] sm:w-[420px]">
               <p className="text-xs tracking-widest uppercase text-zinc-300 mb-2 px-1">
                 {p.name}
               </p>
 
-              <div className="group relative h-[68vh] max-h-[640px] overflow-hidden bg-[#2C2F34]">
+              <div className="group relative h-[58vh] max-h-[560px] overflow-hidden bg-[#2C2F34]">
                 {p.image ? (
                   <img
                     src={p.image}
@@ -114,7 +115,7 @@ export default function Projects(props) {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="text-xl atma-semibold text-[#E4572E] text-center px-4">
-                      COMING SOON ❗
+                      COMING SOON 
                     </span>
                   </div>
                 )}
@@ -158,11 +159,12 @@ export default function Projects(props) {
           dragging.current = true;
           setFromClientX(e.clientX);
         }}
-        className="relative mx-auto mt-6 h-2 w-48 rounded-full"
+        className="relative mx-auto mt-4 h-2 w-48 rounded-full"
         style={{ background: "linear-gradient(to right, #4FA3D1, #E4572E)" }}
       >
         <div
-className="absolute top-1/2 w-4 h-4 rounded-full bg-[#1F1E24] border border-[#6d697e] shadow"          style={{ left: `calc(${progress * 100}% - 8px)`, transform: "translateY(-50%)" }}
+          className="absolute top-1/2 w-4 h-4 rounded-full bg-[#1F1E24] border border-[#6d697e] shadow"
+          style={{ left: `calc(${progress * 100}% - 8px)`, transform: "translateY(-50%)" }}
         />
       </div>
     </motion.section>

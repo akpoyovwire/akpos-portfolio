@@ -1,32 +1,57 @@
-import React, { useEffect, useRef } from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 /*
   CustomCursor
-  Replaces the OS pointer with the brown hand image, moved by JS instead of
-  the browser, so it can lag behind the real mouse. A requestAnimationFrame
-  loop eases the displayed position toward the real cursor every frame.
+  Desktop/trackpad (pointer: fine): the brown hand eases toward the real
+  mouse every frame (see FOLLOW), and swaps to the upright hand over
+  links/buttons.
 
-  FOLLOW controls the lag: higher = snappier (closer to the real mouse),
-  lower = floatier. Keep this above WaterTrail's FOLLOW (0.14) so the cursor
-  itself feels only slightly delayed, while the water trail lags further
-  behind it.
-
-  Requires "cursor: none" in CSS (see index.css) wherever this is active,
-  otherwise you'd see both the OS pointer and this image.
+  Touch (pointer: coarse): there is no mouse to follow, so instead the
+  cursor jumps straight to wherever the finger taps - "period", no lerp,
+  no lingering at a stale position. It was previously disabled outright on
+  touch, which is what left it stuck rendering at its default CSS position
+  (fixed top-0 left-0, the top-left corner) forever, since nothing ever
+  moved it. It now stays hidden until the first tap, then appears exactly
+  there and follows every subsequent tap.
 */
 
-const FOLLOW = 0.25 
+const FOLLOW = 0.2
 const HOTSPOT_NORMAL = { x: 8, y: 4 } // fingertip on the tilted hand
 const HOTSPOT_HOVER = { x: 12.5, y: 1.5 } // fingertip on the upright hand
 const SIZE = 30
 
 export default function CustomCursor() {
   const imgRef = useRef(null)
+  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    if (window.matchMedia("(pointer: coarse)").matches) return // no cursor to move on touch
-
     const el = imgRef.current
+    const isCoarse = window.matchMedia("(pointer: coarse)").matches
+
+    if (isCoarse) {
+      // Touch: snap straight to each tap, no easing - there's no continuous
+      // pointer position to lerp toward between taps.
+      const place = (x, y) => {
+        setVisible(true)
+        el.style.transform = `translate(${x - HOTSPOT_NORMAL.x}px, ${y - HOTSPOT_NORMAL.y}px)`
+      }
+      const onTouchStart = (e) => {
+        const t = e.touches[0]
+        if (t) place(t.clientX, t.clientY)
+      }
+      const onTouchMove = (e) => {
+        const t = e.touches[0]
+        if (t) place(t.clientX, t.clientY)
+      }
+      document.addEventListener("touchstart", onTouchStart, { passive: true })
+      document.addEventListener("touchmove", onTouchMove, { passive: true })
+      return () => {
+        document.removeEventListener("touchstart", onTouchStart)
+        document.removeEventListener("touchmove", onTouchMove)
+      }
+    }
+
+    // Desktop/trackpad: ease toward the real mouse every frame
     let target = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
     let pos = { ...target }
     let hovering = false
@@ -36,6 +61,7 @@ export default function CustomCursor() {
       node.closest?.("a, button, [role='button'], .cursor-pointer")
 
     const onMove = (e) => {
+      setVisible(true)
       target = { x: e.clientX, y: e.clientY }
       const nowHovering = !!isInteractive(e.target)
       if (nowHovering !== hovering) {
@@ -69,7 +95,7 @@ export default function CustomCursor() {
       width={SIZE}
       height={SIZE}
       className="fixed top-0 left-0 z-[999] pointer-events-none"
-      style={{ willChange: "transform" }}
+      style={{ willChange: "transform", opacity: visible ? 1 : 0 }}
     />
   )
 }

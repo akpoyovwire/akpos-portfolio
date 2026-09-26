@@ -37,6 +37,7 @@ import { motion, useMotionValue, useTransform } from "framer-motion"
 const PERSPECTIVE = 2400
 const START_ANGLE = -90
 const SNAP_IDLE_MS = 140
+const SNAP_THRESHOLD = 0.05 // commit past this fraction of a transition, retreat under it
 
 const clamp01 = (n) => Math.min(1, Math.max(0, n))
 const smooth = (t) => t * t * (3 - 2 * t)
@@ -135,6 +136,12 @@ export default function FlipStack({ pages, background = "#1F1E24", mapBg }) {
     }
   }, [count, progress])
 
+  // Snap-on-idle, in three zones: inside the flip stack (page to page),
+  // and at the two edges where it meets plain-scrolling content - Hero
+  // above and Footer below. Hero/Footer have no rotation to track, so
+  // there "10% into the transition" means 10% of one screen height past
+  // the boundary, which lines up with where the sticky stage naturally
+  // engages/releases.
   useEffect(() => {
     let idleTimer
     const trySnap = () => {
@@ -143,13 +150,42 @@ export default function FlipStack({ pages, background = "#1F1E24", mapBg }) {
       if (!runway || !stage) return
       const seg = 1 / (count - 1)
       const distance = stage.offsetHeight * (count - 1)
-      const v = clamp01(-runway.getBoundingClientRect().top / distance)
-      const segIndex = Math.min(count - 2, Math.max(0, Math.floor(v / seg + 1e-6)))
-      const local = (v - segIndex * seg) / seg
-      if (local < 0.02 || local > 0.98) return
-      const targetV = local > 0.5 ? (segIndex + 1) * seg : segIndex * seg
       const runwayTop = window.scrollY + runway.getBoundingClientRect().top
-      window.scrollTo({ top: runwayTop + targetV * distance, behavior: "smooth" })
+      const runwayHeight = runway.offsetHeight
+      const vh = window.innerHeight
+
+      // zone 1: between two flip pages
+      const v = clamp01(-runway.getBoundingClientRect().top / distance)
+      if (v > 0.001 && v < 0.999) {
+        const segIndex = Math.min(count - 2, Math.max(0, Math.floor(v / seg + 1e-6)))
+        const local = (v - segIndex * seg) / seg
+        if (local >= 0.02 && local <= 0.98) {
+          const targetV = local > SNAP_THRESHOLD ? (segIndex + 1) * seg : segIndex * seg
+          window.scrollTo({ top: runwayTop + targetV * distance, behavior: "smooth" })
+          return
+        }
+      }
+
+      // zone 2: Hero <-> first flip page (top of the runway)
+      const heroLow = runwayTop - vh // Hero fills the screen
+      const heroLocal = (window.scrollY - heroLow) / vh
+      if (heroLocal > 0.02 && heroLocal < 0.98) {
+        window.scrollTo({
+          top: heroLocal > SNAP_THRESHOLD ? runwayTop : heroLow,
+          behavior: "smooth",
+        })
+        return
+      }
+
+      // zone 3: last flip page <-> Footer (bottom of the runway)
+      const projLow = runwayTop + runwayHeight - vh // last page fills the screen
+      const projLocal = (window.scrollY - projLow) / vh
+      if (projLocal > 0.02 && projLocal < 0.98) {
+        window.scrollTo({
+          top: projLocal > SNAP_THRESHOLD ? projLow + vh : projLow,
+          behavior: "smooth",
+        })
+      }
     }
     const onScroll = () => {
       clearTimeout(idleTimer)
