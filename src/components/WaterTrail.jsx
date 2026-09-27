@@ -15,10 +15,11 @@ import React, { useEffect, useRef } from "react"
 */
 
 const FOLLOW = 0.14 // 0-1. Lower = more delay behind the mouse
-const SPACING = 10 // px the follower travels between ring drops
+const SPACING = 16 // px the follower travels between ring drops
 const RING_LIFE = 1400 // ms a ring lasts
+const MAX_RINGS = 60 // safety cap; irrelevant under normal movement, guards worst-case fast/erratic input
 const RING_SIZE = 46 // max ring radius in px
-const WAKE_ANGLE = (50.5 * Math.PI) / 180 // the classic duck-wake angle
+const WAKE_ANGLE = (19.5 * Math.PI) / 100 // the classic duck-wake angle
 
 export default function WaterTrail({ rgb = "255,255,255" }) {
   const canvasRef = useRef(null)
@@ -61,6 +62,7 @@ export default function WaterTrail({ rgb = "255,255,255" }) {
 
       if (Math.hypot(follower.x - lastDrop.x, follower.y - lastDrop.y) >= SPACING) {
         rings.push({ x: follower.x, y: follower.y, born: now })
+        if (rings.length > MAX_RINGS) rings.shift()
         lastDrop = { x: follower.x, y: follower.y }
         window.dispatchEvent(
           new CustomEvent("water:drop", { detail: { x: follower.x, y: follower.y } })

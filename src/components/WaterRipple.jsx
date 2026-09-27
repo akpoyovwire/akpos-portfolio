@@ -14,18 +14,36 @@ import React, { useEffect, useRef } from "react"
 
   The plain <video>/<img> stays underneath, so if WebGL is unavailable it
   just shows normally.
+
+  --- Idle cost fix (this revision) ---
+  Previously the render loop ran on every rAF tick for as long as this
+  component was on screen at all, whether or not any ripple was actually
+  active - and every one of those frames did a full-resolution texImage2D
+  re-upload of the video frame to the GPU. With no ripple active, the
+  shader's own math (offset = 0, shade = 0) makes its output pixel-for-pixel
+  identical to the plain <video> already playing underneath it, so almost
+  all of that work was being spent to redraw something already on screen.
+  That constant background cost is what was starving scroll/paint on both
+  desktop and mobile (mobile especially, since it has no mouse - no
+  WaterTrail ripples - so the loop ran 100% of the time for 0% of the
+  visual benefit outside an occasional tap).
+
+  Now the loop (and the canvas itself) only runs while at least one ripple
+  is within its life window. The rest of the time the canvas is hidden and
+  the always-playing <video>/<img> shows through directly - same visual
+  result, none of the cost.
 */
 
 const MAX_CLICKS = 8
 const MAX_TRAIL = 10
 const TOTAL = MAX_CLICKS + MAX_TRAIL
 
-const DURATION = 20.0 // seconds a ripple lasts
-const SPEED = 300.0 // how fast the rings spread (px per second)
-const STRENGTH = 80.0 // how strongly the water bends the picture (px)
-const WAVE_FREQ = 0.1 // ring spacing: bigger number = tighter rings
-const TAIL = 0.008 // how long the trail of rings behind the front lasts (smaller = more rings)
-const SHINE = 0.010 // light and dark shading on the waves
+const DURATION = 6.0
+const SPEED = 220.0
+const STRENGTH = 12.0
+const WAVE_FREQ = 0.1
+const TAIL = 0.006
+const SHINE = 0.02
 
 const TRAIL_DURATION = 1.8
 const TRAIL_SPEED = 130.0
@@ -190,11 +208,34 @@ export default function WaterRipple({ src, type = "video" }) {
     let visible = true
     const intersectionObserver = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting
+      if (visible) wake()
     })
     intersectionObserver.observe(canvas)
 
     const inside = (rect, x, y) =>
       x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+
+    // canvas starts hidden - nothing is rippling yet, so there is nothing
+    // for it to show that the plain, always-playing media isn't already
+    // showing underneath it
+    canvas.style.opacity = "0"
+    let active = false
+    const setActive = (v) => {
+      if (v === active) return
+      active = v
+      canvas.style.opacity = v ? "1" : "0"
+      if (v) wake()
+    }
+
+    const hasActiveRipples = (now) => {
+      for (let i = 0; i < TOTAL; i++) {
+        const isTrail = i >= MAX_CLICKS
+        const life = isTrail ? TRAIL_DURATION : DURATION
+        const age = now - startTimes[i]
+        if (age >= 0 && age <= life) return true
+      }
+      return false
+    }
 
     const addClick = (e) => {
       const rect = canvas.getBoundingClientRect()
@@ -203,6 +244,7 @@ export default function WaterRipple({ src, type = "video" }) {
       positions[nextClick * 2] = e.clientX - rect.left
       positions[nextClick * 2 + 1] = e.clientY - rect.top
       nextClick = (nextClick + 1) % MAX_CLICKS
+      setActive(true)
     }
 
     const addTrail = (e) => {
@@ -214,6 +256,7 @@ export default function WaterRipple({ src, type = "video" }) {
       positions[slot * 2] = x - rect.left
       positions[slot * 2 + 1] = y - rect.top
       nextTrail = (nextTrail + 1) % MAX_TRAIL
+      setActive(true)
     }
 
     document.addEventListener("click", addClick)
@@ -229,12 +272,20 @@ export default function WaterRipple({ src, type = "video" }) {
         ? [media.naturalWidth, media.naturalHeight]
         : [media.videoWidth, media.videoHeight]
 
-    let raf
+    let raf = null
+    let running = false
     const render = () => {
-      raf = requestAnimationFrame(render)
-      if (!visible || !mediaReady()) return
-
       const now = performance.now() / 1000
+
+      // nothing left to animate - stop uploading/drawing frames and let the
+      // plain media underneath show through instead of paying for a redraw
+      // that would look identical to it
+      if (!hasActiveRipples(now)) {
+        setActive(false)
+        running = false
+        return
+      }
+
       for (let i = 0; i < TOTAL; i++) {
         const isTrail = i >= MAX_CLICKS
         const life = isTrail ? TRAIL_DURATION : DURATION
@@ -253,11 +304,28 @@ export default function WaterRipple({ src, type = "video" }) {
       gl.uniform1f(uDpr, dpr)
       gl.uniform4fv(uRipples, uniformData)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
+
+      if (visible) raf = requestAnimationFrame(render)
+      else running = false // stop scheduling frames while off-screen
     }
-    raf = requestAnimationFrame(render)
+    const wake = () => {
+      // only worth running if there's an active ripple to actually show
+      if (!running && active && mediaReady()) {
+        running = true
+        raf = requestAnimationFrame(render)
+      }
+    }
+    // in case a ripple starts while media isn't ready yet
+    let readyPoll = setInterval(() => {
+      if (mediaReady()) {
+        clearInterval(readyPoll)
+        wake()
+      }
+    }, 100)
 
     return () => {
       cancelAnimationFrame(raf)
+      clearInterval(readyPoll)
       document.removeEventListener("click", addClick)
       window.removeEventListener("water:drop", addTrail)
       resizeObserver.disconnect()
@@ -292,7 +360,11 @@ export default function WaterRipple({ src, type = "video" }) {
           <source src={src} type="video/mp4" />
         </video>
       )}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ opacity: 0, transition: "opacity 0.15s ease" }}
+      />
     </>
   )
 }

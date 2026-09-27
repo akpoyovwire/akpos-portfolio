@@ -35,14 +35,24 @@ export default function Works(props) {
     setProgress(max > 0 ? el.scrollLeft / max : 0);
   };
 
+  // Batched via requestAnimationFrame, same pattern as the rest of the
+  // site's scroll listeners. A raw "scroll" event can fire dozens of times
+  // per second while dragging - reading scrollWidth/clientWidth (a layout
+  // read) on every single one of those, unthrottled, adds needless layout
+  // work exactly while the carousel is being actively dragged, which is
+  // when it's most likely to be felt as stiffness (touch drag especially).
   useEffect(() => {
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; syncFromScroll(); }); }
+    };
     syncFromScroll();
     const el = trackRef.current;
-    el.addEventListener("scroll", syncFromScroll, { passive: true });
-    window.addEventListener("resize", syncFromScroll);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
     return () => {
-      el.removeEventListener("scroll", syncFromScroll);
-      window.removeEventListener("resize", syncFromScroll);
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
     };
   }, []);
 

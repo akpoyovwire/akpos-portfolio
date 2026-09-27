@@ -58,10 +58,26 @@ export default function CustomCursor() {
     let target = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
     let pos = { ...target }
     let hovering = false
-    let raf
+    let raf = null
+    let running = false
 
     const isInteractive = (node) =>
       node.closest?.("a, button, [role='button'], .cursor-pointer")
+
+    const tick = () => {
+      const hotspot = hovering ? HOTSPOT_HOVER : HOTSPOT_NORMAL
+      pos.x += (target.x - pos.x) * FOLLOW
+      pos.y += (target.y - pos.y) * FOLLOW
+      el.style.transform = `translate(${pos.x - hotspot.x}px, ${pos.y - hotspot.y}px)`
+
+      // once fully caught up there's nothing left to animate - stop
+      // scheduling frames rather than writing the same transform forever
+      if (Math.hypot(target.x - pos.x, target.y - pos.y) < 0.1) {
+        running = false
+        return
+      }
+      raf = requestAnimationFrame(tick)
+    }
 
     const onMove = (e) => {
       setVisible(true)
@@ -71,21 +87,16 @@ export default function CustomCursor() {
         hovering = nowHovering
         el.src = hovering ? "/hand-pointer.svg" : "/hand.svg"
       }
-    }
-
-    const tick = () => {
-      const hotspot = hovering ? HOTSPOT_HOVER : HOTSPOT_NORMAL
-      pos.x += (target.x - pos.x) * FOLLOW
-      pos.y += (target.y - pos.y) * FOLLOW
-      el.style.transform = `translate(${pos.x - hotspot.x}px, ${pos.y - hotspot.y}px)`
-      raf = requestAnimationFrame(tick)
+      if (!running) {
+        running = true
+        raf = requestAnimationFrame(tick)
+      }
     }
 
     document.addEventListener("mousemove", onMove, { passive: true })
-    raf = requestAnimationFrame(tick)
     return () => {
       document.removeEventListener("mousemove", onMove)
-      cancelAnimationFrame(raf)
+      if (raf) cancelAnimationFrame(raf)
     }
   }, [])
 

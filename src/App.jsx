@@ -18,8 +18,6 @@ export default function App() {
 const [isOpen, setIsOpen] = useState(false)
 const [scrollTarget, setScrollTarget] = useState("#footer")
 const [toolDescription, setToolDescription] = useState(null);
-const [currentIndex, setCurrentIndex] = useState(0)
-const [touchStartX, setTouchStartX] = useState(null)
 const [time, setTime] = useState("")
 const [aboutInView, setAboutInView] = useState(false)
 const [worksInView, setworksInView] = useState(false)
@@ -60,30 +58,12 @@ updateClock();
   return () => clearInterval(interval);
 }, []);
 
-const handleTouchStart = (e) => {
-  setTouchStartX(e.touches[0].clientX);
-};
-
-const handleTouchEnd = (e) => {
-  if (touchStartX === null) return;
-  const touchEndX = e.changedTouches[0].clientX;
-  const diffX = touchStartX - touchEndX;
-
-  if (diffX > 50) {
-    // Swipe Left = Next
-    setCurrentIndex((prev) => (prev === 2 ? 0 : prev + 1));
-  } else if (diffX < -50) {
-    // Swipe Right = Prev
-    setCurrentIndex((prev) => (prev === 0 ? 2 : prev - 1));
-  }
-
-  setTouchStartX(null);
-};
-
   const toggleMenu = () => setIsOpen(!isOpen);
 
  useEffect(() => {
-  const handleScroll = () => {
+  let ticking = false
+  const computeScrollTarget = () => {
+    ticking = false
     const expertiseSection = document.getElementById("expertise");
     const expertisePosition = expertiseSection
   ? expertiseSection.getBoundingClientRect().top + window.scrollY
@@ -98,8 +78,11 @@ const handleTouchEnd = (e) => {
       setScrollTarget("#home");
     }
   };
+  const handleScroll = () => {
+    if (!ticking) { ticking = true; requestAnimationFrame(computeScrollTarget) }
+  };
 
-  window.addEventListener("scroll", handleScroll);
+  window.addEventListener("scroll", handleScroll, { passive: true });
   return () => window.removeEventListener("scroll", handleScroll);
 }, []);
 
@@ -181,7 +164,7 @@ setIsOpen={setIsOpen}
     { id: "about", content: <About typedAboutContent={typedAboutContent} typedAboutHeading={typedAboutHeading} setAboutInView={setAboutInView} sectionFade={sectionFade} /> },
     { id: "tools", onActiveChange: setToolsInView, content: <Tools setToolDescription={setToolDescription} toolDescription={toolDescription} typedToolsHeading={typedToolsHeading} sectionFade={sectionFade} /> },
     { id: "expertise", onActiveChange: setExpertiseInView, content: <Expertise expertiseList={expertiseList} sectionFade={sectionFade} typedExpertiseHeading={typedExpertiseHeading} /> },
-    { id: "works", onActiveChange: setworksInView, content: <Works sectionFade={sectionFade} typedworksHeading={typedworksHeading} handleTouchStart={handleTouchStart} handleTouchEnd={handleTouchEnd} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} /> },
+    { id: "works", onActiveChange: setworksInView, content: <Works sectionFade={sectionFade} typedworksHeading={typedworksHeading} /> },
   ]}
 />
 <Footer time={time} />
