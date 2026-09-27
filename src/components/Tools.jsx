@@ -42,6 +42,10 @@ export default function Tools(props) {
   return (
     <motion.section
       variants={props.sectionFade}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: false, amount: 0.4 }}
+      onViewportEnter={() => props.setToolsInView?.(true)}
       className="px-6 py-12 max-w-4xl mx-auto relative z-10"
     >
       <motion.h3

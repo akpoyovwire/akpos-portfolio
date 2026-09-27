@@ -9,6 +9,10 @@ export default function Expertise(props){
         {/* EXPERTISE */}
       <motion.section
         variants={props.sectionFade}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.4 }}
+        onViewportEnter={() => props.setExpertiseInView?.(true)}
         className="px-6 py-12 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10"
      >
          <motion.h3

@@ -18,10 +18,23 @@ export default function Footer(props){
       className="absolute inset-0 w-full h-full object-cover opacity-65"
     />
 
+    {/* GIANT WORDMARK - low in the footer, behind everything. Bumped up
+        from a barely-visible /10 to /20 and moved out of the copyright
+        line into its own full-width layer so it actually reads as a big
+        background graphic instead of disappearing or squeezing the text
+        above it. */}
+    <div
+      aria-hidden="true"
+      className="pointer-events-none select-none absolute inset-x-0 bottom-0 z-0 text-[#EDEDF8]/20 bebas-neue-regular leading-none whitespace-nowrap text-center translate-y-[10%]"
+      style={{ fontSize: "clamp(3rem, 16vw, 13rem)" }}
+    >
+      AKPOYOVWIRE
+    </div>
+
     {/* CONTENT with slide-up */}
     <motion.div
      
-      className="absolute inset-0 flex flex-col items-center justify-center px-8 py-12"
+      className="absolute inset-0 z-10 flex flex-col items-center justify-center px-8 py-12"
      
     >
             {/* CLOCK FIRST */}
@@ -111,7 +124,6 @@ export default function Footer(props){
       <div className="text-center text-sm ">
         &copy; {new Date().getFullYear()} AkposWorld. All rights reserved.
         <br />
-        
       </div>
     </motion.div>
   </div>

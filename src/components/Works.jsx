@@ -93,7 +93,14 @@ export default function Works(props) {
   }, []);
 
   return (
-    <motion.section variants={props.sectionFade} className="relative w-full py-8 z-10">
+    <motion.section
+      variants={props.sectionFade}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: false, amount: 0.3 }}
+      onViewportEnter={() => props.setworksInView?.(true)}
+      className="relative w-full py-8 z-10"
+    >
       <motion.h3
         variants={props.sectionFade}
         className="text-2xl bebas-neue-regular text-zinc-100 mb-6 text-center px-6"
