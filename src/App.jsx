@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react"
 import { Home, Folder, Database, Pencil, } from "lucide-react"
 import { FaReact } from "react-icons/fa"
 import { motion, useScroll, useTransform, useSpring } from "framer-motion"
+import { gsap } from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
 import Lenis from "lenis"
 import "lenis/dist/lenis.css"
 import Ripple from "./components/Ripple"
@@ -16,15 +18,23 @@ import ScrollArrow from "./components/ScrollArrow"
 import WaterTrail from "./components/WaterTrail"
 import CustomCursor from "./components/CustomCursor"
 
+gsap.registerPlugin(ScrollTrigger)
+
 /*
   SectionStack / StackLayer
-  Scroll-driven reveal transition between About -> Tools -> Expertise ->
-  Works: each section holds a full-screen spot and the next one slides up
-  and covers it as the user scrolls, instead of the two simply stacking one
-  after another. This is driven directly by scroll position via Framer
-  Motion's useScroll/useTransform (a MotionValue read from real scrollY),
-  not whileInView and not a timed animation - so scrolling slowly plays the
+  Scroll-driven reveal transition between Tools -> Expertise -> Works: each
+  section holds a full-screen spot and the next one slides up and covers
+  it as the user scrolls, instead of the two simply stacking one after
+  another. Driven directly by scroll position via Framer Motion's
+  useScroll/useTransform (a MotionValue read from real scrollY), not
+  whileInView and not a timed animation - so scrolling slowly plays the
   reveal progressively, and scrolling fast just lands on the result.
+
+  About isn't in this stack. It needs real, tall document height so its own
+  GSAP ScrollTrigger has scroll distance to pin against (see About.jsx) -
+  a fixed 100vh transformed layer here can't provide that - so it lives
+  just above this stack as its own block, and Tools (now index 0 of this
+  stack) slides up to cover it exactly the same way Expertise covers Tools.
 
   Layout: one tall wrapper (N sections * 100vh of scroll distance) holds a
   position:sticky, full-viewport "stage." Every section lives inside that
@@ -46,15 +56,17 @@ function StackLayer({ index, total, progress, style, children }) {
   const slot = 1 / total
   const transitionFraction = 1 - HOLD_FRACTION
 
-  // This layer's own entrance: slides up from below (100% -> 0%) during the
-  // tail end of the PREVIOUS layer's slot, so the two visibly overlap.
+  // This layer's own entrance: slides up from below (100% -> 0%). For every
+  // layer after the first, that happens during the tail end of the
+  // PREVIOUS layer's slot, so the two visibly overlap. The first layer has
+  // no previous slot to borrow from (progress can't go negative), so it
+  // uses the leading edge of its own slot instead - it still gets a real
+  // slide-up entrance, which matters here because index 0 of this stack is
+  // Tools, and Tools sliding up to cover About is one of the transitions
+  // that's supposed to feel the same as all the others.
   const enterStart = index === 0 ? 0 : index * slot - transitionFraction * slot
-  const enterEnd = index === 0 ? 1 : index * slot
-  const y = useTransform(
-    progress,
-    index === 0 ? [0, 1] : [enterStart, enterEnd],
-    index === 0 ? [0, 0] : ["100%", "0%"]
-  )
+  const enterEnd = index === 0 ? transitionFraction * slot : index * slot
+  const y = useTransform(progress, [enterStart, enterEnd], ["100%", "0%"])
 
   // A subtle settle-back (scale + dim) on THIS layer, timed to the exact
   // window the NEXT layer spends sliding over it - a secondary depth cue,
@@ -116,7 +128,6 @@ const [isOpen, setIsOpen] = useState(false)
 const [scrollTarget, setScrollTarget] = useState("#footer")
 const [toolDescription, setToolDescription] = useState(null);
 const [time, setTime] = useState("")
-const [aboutInView, setAboutInView] = useState(false)
 const [worksInView, setworksInView] = useState(false)
 const [expertiseInView, setExpertiseInView] = useState(false)
 const [toolsInView, setToolsInView] = useState(false)
@@ -129,14 +140,6 @@ const pageBg = "linear-gradient(135deg, #1F1E24, #23241E)"
 const sectionBgStyle = {
   background: `url(/section-map-bg.svg) center/cover no-repeat, ${pageBg}`,
 }
-
-// ABOUT
-const typedAboutHeading = useTypingEffect("About Me", 80, aboutInView)
-const typedAboutContent = useTypingEffect(
-  "I build secure, modern web apps with React, Supabase, OWASP best practices, Wireshark & Burp Suite.",
-  6,
-  aboutInView
-)
 
 // WORKS
 const typedworksHeading = useTypingEffect("works", 80, worksInView)
@@ -184,12 +187,17 @@ updateClock();
       touchMultiplier: 1.5,
     })
 
-    let rafId
-    const raf = (time) => {
-      lenis.raf(time)
-      rafId = requestAnimationFrame(raf)
+    // Feed Lenis's smoothed scroll straight into ScrollTrigger, and drive
+    // Lenis off GSAP's own ticker instead of a separate requestAnimationFrame
+    // loop. This is the standard Lenis+GSAP pairing - without it, About's
+    // ScrollTrigger reads native scroll position directly, which lags a
+    // frame or two behind what Lenis is actually showing on screen.
+    lenis.on("scroll", ScrollTrigger.update)
+    const onTick = (time) => {
+      lenis.raf(time * 1000)
     }
-    rafId = requestAnimationFrame(raf)
+    gsap.ticker.add(onTick)
+    gsap.ticker.lagSmoothing(0)
 
     const onAnchorClick = (e) => {
       const link = e.target.closest('a[href^="#"]')
@@ -203,7 +211,7 @@ updateClock();
     document.addEventListener("click", onAnchorClick)
 
     return () => {
-      cancelAnimationFrame(rafId)
+      gsap.ticker.remove(onTick)
       document.removeEventListener("click", onAnchorClick)
       lenis.destroy()
     }
@@ -308,22 +316,17 @@ setIsOpen={setIsOpen}
 
 <Hero />
 
-{/* Scroll-driven reveal: About -> Tools -> Expertise -> Works, each one
-    sliding up and covering the previous as the user scrolls. */}
+{/* About pins itself and reveals its own four parts as you scroll through
+    it (see About.jsx) - it needs real document height for that, so it's
+    a normal block here, not one of the stacked layers below. */}
+<About />
+
+{/* Scroll-driven reveal: Tools -> Expertise -> Works, each one sliding up
+    and covering the previous as the user scrolls. Tools sliding up to
+    cover About (above) uses the same mechanism, just anchored to the
+    start of this stack's own scroll range - see the StackLayer comment. */}
 <SectionStack
   sections={[
-    {
-      id: "about",
-      style: sectionBgStyle,
-      node: (
-        <About
-          typedAboutContent={typedAboutContent}
-          typedAboutHeading={typedAboutHeading}
-          setAboutInView={setAboutInView}
-          sectionFade={sectionFade}
-        />
-      ),
-    },
     {
       id: "tools",
       style: sectionBgStyle,

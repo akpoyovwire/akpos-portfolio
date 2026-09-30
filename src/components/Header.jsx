@@ -12,7 +12,7 @@ export default function Header(props){
     viewBox="10 10 310 85"
     className="w-full h-auto overflow-visible"
     role="img"
-    aria-label="Meet the Developer"
+    aria-label="Meet the Visionary"
   >
     <defs>
       <path id="header-arc" d="M 10 80 A 280 310 0 0 1 310 80" fill="none" />
@@ -24,7 +24,7 @@ export default function Header(props){
       textAnchor="middle"
     >
       <textPath href="#header-arc" startOffset="50%">
-        MEET THE DEVELOPER
+        MEET THE VISIONARY
       </textPath>
     </text>
   </svg>
