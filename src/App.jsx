@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { Home, Folder, Database, Pencil, } from "lucide-react"
 import { FaReact } from "react-icons/fa"
-import { motion, useScroll, useTransform, useSpring } from "framer-motion"
+import { motion, useScroll, useTransform } from "framer-motion"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import Lenis from "lenis"
@@ -17,6 +17,7 @@ import Header from "./components/Header"
 import ScrollArrow from "./components/ScrollArrow"
 import WaterTrail from "./components/WaterTrail"
 import CustomCursor from "./components/CustomCursor"
+import Intro from "./components/Intro"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -56,17 +57,16 @@ function StackLayer({ index, total, progress, style, children }) {
   const slot = 1 / total
   const transitionFraction = 1 - HOLD_FRACTION
 
-  // This layer's own entrance: slides up from below (100% -> 0%). For every
-  // layer after the first, that happens during the tail end of the
-  // PREVIOUS layer's slot, so the two visibly overlap. The first layer has
-  // no previous slot to borrow from (progress can't go negative), so it
-  // uses the leading edge of its own slot instead - it still gets a real
-  // slide-up entrance, which matters here because index 0 of this stack is
-  // Tools, and Tools sliding up to cover About is one of the transitions
-  // that's supposed to feel the same as all the others.
+  // Tools (index 0) has no previous layer to slide over inside this stack -
+  // About lives outside it, in real document flow. Giving Tools a slide-up
+  // entrance here carves out a window where About has already scrolled
+  // away and Tools hasn't arrived yet: nothing on screen - that's the black
+  // gap. So index 0 just sits static at y:0 the whole time; the hand-off
+  // still works because this stack's sticky stage snaps into place the
+  // instant About's own pin releases, with Tools already sitting there.
   const enterStart = index === 0 ? 0 : index * slot - transitionFraction * slot
-  const enterEnd = index === 0 ? transitionFraction * slot : index * slot
-  const y = useTransform(progress, [enterStart, enterEnd], ["100%", "0%"])
+  const enterEnd = index === 0 ? 1 : index * slot
+  const y = useTransform(progress, [enterStart, enterEnd], index === 0 ? ["0%", "0%"] : ["100%", "0%"])
 
   // A subtle settle-back (scale + dim) on THIS layer, timed to the exact
   // window the NEXT layer spends sliding over it - a secondary depth cue,
@@ -74,16 +74,25 @@ function StackLayer({ index, total, progress, style, children }) {
   const isLast = index === total - 1
   const coverStart = isLast ? 0 : (index + 1) * slot - transitionFraction * slot
   const coverEnd = isLast ? 1 : (index + 1) * slot
-  const scale = useTransform(progress, isLast ? [0, 1] : [coverStart, coverEnd], isLast ? [1, 1] : [1, 0.94])
-  const brightness = useTransform(progress, isLast ? [0, 1] : [coverStart, coverEnd], isLast ? [1, 1] : [1, 0.55])
-  const filter = useTransform(brightness, (b) => `brightness(${b})`)
+  const coverRange = isLast ? [0, 1] : [coverStart, coverEnd]
+  const scale = useTransform(progress, coverRange, isLast ? [1, 1] : [1, 0.94])
+  // Dim the covered layer with an overlay's opacity instead of a CSS
+  // brightness() filter. A filter on a full-screen layer is re-rendered on
+  // every scroll frame and is a common cause of choppy scrolling; an opacity
+  // change is nearly free.
+  const dim = useTransform(progress, coverRange, isLast ? [0, 0] : [0, 0.45])
 
   return (
     <motion.div
       className="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden"
-      style={{ ...style, zIndex: index, y, scale, filter }}
+      style={{ ...style, zIndex: index, y, scale, willChange: "transform" }}
     >
       {children}
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-black"
+        style={{ opacity: dim }}
+      />
     </motion.div>
   )
 }
@@ -95,10 +104,9 @@ function SectionStack({ sections }) {
     target: containerRef,
     offset: ["start start", "end end"],
   })
-  // Springing the raw scroll progress takes the edge off fast flicks/trackpad
-  // jitter without decoupling the effect from scroll itself - it still only
-  // moves because scrollYProgress moved.
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.3 })
+  // Use the raw scroll progress directly. Lenis already smooths the scroll,
+  // so a spring on top just added a third layer of lag.
+  const progress = scrollYProgress
 
   return (
     <div ref={containerRef} className="relative" style={{ height: `${total * 100}vh` }}>
@@ -131,6 +139,8 @@ const [time, setTime] = useState("")
 const [worksInView, setworksInView] = useState(false)
 const [expertiseInView, setExpertiseInView] = useState(false)
 const [toolsInView, setToolsInView] = useState(false)
+const [introDone, setIntroDone] = useState(false)
+const lenisRef = useRef(null)
 
 const pageBg = "linear-gradient(135deg, #1F1E24, #23241E)"
 
@@ -167,6 +177,20 @@ updateClock();
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
+  // Always start at the top so the intro sits over the hero, not mid-page
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual"
+    window.scrollTo(0, 0)
+  }, [])
+
+  // Intro finished: unlock scrolling and re-measure the pinned About section
+  useEffect(() => {
+    if (introDone && lenisRef.current) {
+      lenisRef.current.start()
+      ScrollTrigger.refresh()
+    }
+  }, [introDone])
+
   /*
     SMOOTH SCROLL - Lenis
     This replaces FlipStack's whole gesture/step/idle-snap system. There is
@@ -182,10 +206,13 @@ updateClock();
   */
   useEffect(() => {
     const lenis = new Lenis({
-      lerp: 0.1,           // 0-1: lower = smoother/more trailing, higher = snappier
-      smoothWheel: true,
+      lerp: 0.12,          // 0-1: lower = floatier, higher = snappier
+      wheelMultiplier: 1.2, // each trackpad/wheel movement travels further
       touchMultiplier: 1.5,
+      smoothWheel: true,
     })
+    lenisRef.current = lenis
+    lenis.stop() // locked while the intro plays; released when it finishes
 
     // Feed Lenis's smoothed scroll straight into ScrollTrigger, and drive
     // Lenis off GSAP's own ticker instead of a separate requestAnimationFrame
@@ -206,7 +233,7 @@ updateClock();
       const target = document.getElementById(id)
       if (!target) return
       e.preventDefault()
-      lenis.scrollTo(target, { duration: 1.2 })
+      lenis.scrollTo(target, { duration: 0.5 })
     }
     document.addEventListener("click", onAnchorClick)
 
@@ -300,11 +327,12 @@ function useTypingEffect(text, speed = 50, active = true) {
 
 return (
 <>
+{!introDone && <Intro onDone={() => setIntroDone(true)} />}
 <Ripple />
 <WaterTrail />
 <CustomCursor />
 
-<main className="min-h-screen voltaire-regular text-[#EDEDF2] scroll-smooth relative" style={{ background: pageBg }}>
+<main className="min-h-screen voltaire-regular text-[#EDEDF2] relative" style={{ background: pageBg }}>
 <Header 
 backdropVariants={backdropVariants}
 isOpen={isOpen}
