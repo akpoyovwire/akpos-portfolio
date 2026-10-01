@@ -119,7 +119,7 @@ export default function Intro({ onDone }) {
       ref={rootRef}
       onClick={() => tlRef.current && tlRef.current.timeScale(6)}
       className="fixed inset-0 z-[9999] flex items-center justify-center"
-      style={{ backgroundColor: "rgba(25, 25, 30, 1)" }}
+      style={{ backgroundColor: "rgba(20, 19, 25, 1)" }}
     >
       <svg
         ref={svgRef}

@@ -3,9 +3,63 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton+SC&family=Atma:wght@300;400;500;600;700&family=Barrio&family=Bebas+Neue&family=Bigelow+Rules&family=Butcherman&family=Charm:wght@400;700&family=Chelsea+Market&family=Combo&family=Fruktur:ital@0;1&family=LINE+Seed+JP&family=LXGW+WenKai+Mono+TC&family=Monoton&family=Nanum+Gothic&family=Over+the+Rainbow&family=Parisienne&family=Peralta&family=Ropa+Sans:ital@0;1&family=Shadows+Into+Light+Two&family=Ubuntu+Condensed&family=Voltaire&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!--
+      PREWARM: hero assets
+      Hero's video and profile image are inside React's tree, so without
+      this the browser doesn't even know they exist until the JS bundle has
+      loaded, parsed, and rendered far enough to put the <video>/<img> tags
+      in the DOM. A static <link rel="preload"> here is picked up by the
+      browser's preload scanner while it's still parsing this raw HTML,
+      before a single line of JS has run - so the video is already
+      downloading in parallel with everything else, instead of starting
+      cold once React gets around to mounting it.
+    -->
+    <link rel="preload" as="video" href="/herovid2.mp4" type="video/mp4">
+    <link rel="preload" as="image" href="/profile.jpg">
+
+    <!--
+      PREWARM: critical fonts (needed for the very first visible frame -
+      Intro + Header + Hero)
+        Parisienne     - Intro's pen-written line
+        Voltaire       - base body font on <main>, affects almost all text
+        Bebas Neue     - Hero's tagline (and used everywhere after)
+        Over the Rainbow - Hero's name heading
+        Butcherman     - Header's arched "MEET THE DEVELOPER" title
+      Kept as a normal blocking stylesheet on purpose: it's small (5
+      families) and needed immediately anyway, so blocking briefly for it
+      is cheaper than a flash of the wrong font on the very first thing the
+      user sees.
+    -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Butcherman&family=Over+the+Rainbow&family=Parisienne&family=Voltaire&display=swap"
+      rel="stylesheet"
+    >
+
+    <!--
+      DEFERRED: everything else (Anton SC, Atma, Bigelow Rules, Monoton,
+      Peralta - used further down the page, About onward). Loaded as a
+      preload-then-swap so it never competes with or blocks the critical
+      stylesheet above: the browser fetches it at low priority, and only
+      turns it into an active stylesheet once it's done. `media="print"`
+      fallback + onload swap is the standard non-blocking-CSS pattern; the
+      <noscript> keeps it working if JS is disabled.
+    -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Anton+SC&family=Atma:wght@300;400;500;600;700&family=Bigelow+Rules&family=Monoton&family=Peralta&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    >
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Anton+SC&family=Atma:wght@300;400;500;600;700&family=Bigelow+Rules&family=Monoton&family=Peralta&display=swap"
+      >
+    </noscript>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google-site-verification" content="Spui2VjeQaJPyqG0wcveMDQaAxE6q1EjBRzA9DC4LPg" />

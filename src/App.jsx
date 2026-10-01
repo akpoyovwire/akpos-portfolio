@@ -53,7 +53,7 @@ gsap.registerPlugin(ScrollTrigger)
 */
 const HOLD_FRACTION = 0.6 // portion of each section's slot spent fully settled before the next one starts covering it
 
-function StackLayer({ index, total, progress, style, children }) {
+function StackLayer({ id, index, total, progress, style, children }) {
   const slot = 1 / total
   const transitionFraction = 1 - HOLD_FRACTION
 
@@ -87,7 +87,18 @@ function StackLayer({ index, total, progress, style, children }) {
       className="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden"
       style={{ ...style, zIndex: index, y, scale, willChange: "transform" }}
     >
-      {children}
+      {/*
+        A plain, un-animated wrapper around the actual content, purely so
+        the arrival-settle effect in App's onAnchorClick has something safe
+        to target. The motion.div above has its own y/scale/opacity fully
+        owned by Framer Motion every frame via useTransform - having GSAP
+        ALSO write transform/opacity directly to that same node would fight
+        it. This inner div is never touched by Framer Motion, so GSAP can
+        animate it freely without any conflict.
+      */}
+      <div data-section={id} className="w-full h-full flex items-center justify-center">
+        {children}
+      </div>
       <motion.div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-black"
@@ -122,7 +133,7 @@ function SectionStack({ sections }) {
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {sections.map((s, i) => (
-          <StackLayer key={s.id} index={i} total={total} progress={progress} style={s.style}>
+          <StackLayer key={s.id} id={s.id} index={i} total={total} progress={progress} style={s.style}>
             {s.node}
           </StackLayer>
         ))}
@@ -192,6 +203,30 @@ updateClock();
   }, [introDone])
 
   /*
+    NEW: re-measure again once EVERYTHING has actually finished loading.
+    The refresh above (tied to introDone) fires as soon as the intro's text
+    animation completes - which has nothing to do with whether the hero
+    video, the About images, or any webfont have actually finished loading
+    yet. ScrollTrigger's pin/scroll-distance math is built from whatever
+    the DOM measures as at the moment it's calculated; if that happens
+    before a late-loading asset shifts the layout, the math is stale until
+    something forces a recompute. `window.load` fires only once every
+    resource on the page (images, video metadata, stylesheets) has
+    finished, so this is the actual "everything has settled" signal -
+    distinct from, and in addition to, the introDone refresh above.
+  */
+  useEffect(() => {
+    const onLoad = () => ScrollTrigger.refresh()
+    if (document.readyState === "complete") {
+      // already fully loaded by the time this effect ran
+      ScrollTrigger.refresh()
+    } else {
+      window.addEventListener("load", onLoad)
+    }
+    return () => window.removeEventListener("load", onLoad)
+  }, [])
+
+  /*
     SMOOTH SCROLL - Lenis
     This replaces FlipStack's whole gesture/step/idle-snap system. There is
     no dead-zone threshold to cross, no forced-duration animation that owns
@@ -216,9 +251,12 @@ updateClock();
 
     // Feed Lenis's smoothed scroll straight into ScrollTrigger, and drive
     // Lenis off GSAP's own ticker instead of a separate requestAnimationFrame
-    // loop. This is the standard Lenis+GSAP pairing - without it, About's
+    // loop. This is the standard, officially-recommended Lenis+GSAP pairing
+    // (confirmed against Lenis's own docs) - without it, About's
     // ScrollTrigger reads native scroll position directly, which lags a
     // frame or two behind what Lenis is actually showing on screen.
+    // `lagSmoothing(0)` here is also the documented recommendation for this
+    // exact pairing, not a stray setting - leave it as-is.
     lenis.on("scroll", ScrollTrigger.update)
     const onTick = (time) => {
       lenis.raf(time * 1000)
@@ -226,6 +264,34 @@ updateClock();
     gsap.ticker.add(onTick)
     gsap.ticker.lagSmoothing(0)
 
+    // NAV-LINK ARRIVAL SETTLE
+    // `immediate: true` below has to stay a hard, instant jump - About's
+    // GSAP pin and the SectionStack's scroll-linked transforms both read
+    // real scroll position every frame, and giving Lenis an eased scroll
+    // duration here would animate THROUGH their scroll ranges and trigger
+    // their own transitions on the way past (confirmed unsafe - a short
+    // duration was already tried). So the jump itself can't get a
+    // transition. This fakes the missing motion instead: right after the
+    // instant jump, a quick opacity dip-and-recover plays on the actual
+    // destination content.
+    //
+    // This ONLY fires here, inside the click handler below - ordinary
+    // wheel/touch scrolling through the site never touches this code path
+    // at all, so it can't interfere with that.
+    //
+    // Opacity only - deliberately no scale/translate. About's section pins
+    // an inner child with GSAP (the pinned element briefly becomes
+    // position:fixed); a transform on an ANCESTOR of that pinned child
+    // would change its containing block and visibly glitch the pin for a
+    // frame. Opacity never does that, so one effect is safe for every
+    // destination, About included.
+    //
+    // For "tools"/"expertise"/"works", the element with that id is a 1x1px
+    // invisible scroll-position marker (see SectionStack above) - fading
+    // that would be invisible. `[data-section="id"]` (added in StackLayer)
+    // is the actual visible content instead. "home"/"about"/"footer" have
+    // no such marker - their id already sits on the real, visible element,
+    // so the querySelector falls through to `target` for those.
     const onAnchorClick = (e) => {
       const link = e.target.closest('a[href^="#"]')
       if (!link) return
@@ -233,7 +299,14 @@ updateClock();
       const target = document.getElementById(id)
       if (!target) return
       e.preventDefault()
-      lenis.scrollTo(target, { duration: 0.5 })
+      lenis.scrollTo(target, { immediate: true })
+
+      const settleTarget = document.querySelector(`[data-section="${id}"]`) || target
+      gsap.fromTo(
+        settleTarget,
+        { opacity: 0.35 },
+        { opacity: 1, duration: 0.4, ease: "power2.out", overwrite: "auto" }
+      )
     }
     document.addEventListener("click", onAnchorClick)
 
