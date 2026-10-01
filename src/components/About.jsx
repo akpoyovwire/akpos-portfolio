@@ -52,13 +52,13 @@ const PARTS = [
     id: "who-i-am",
     title: "Who I Am",
     image: "/whoami.jpg",
-    body: "I am a technology-driven problem solver with a curiosity that extends beyond a single discipline. I develop, secure, research and explore technology to understand problems and turn ideas into meaningful solutions. My work sits at the intersection of software development, cybersecurity, artificial intelligence, research and entrepreneurship.",
+    body: "I am a technology-driven problem solver with a curiosity that extends beyond a single discipline. I develop, secure, research and explore technology to understand problems and turn ideas into meaningful solutions. My work sits at the intersection of software development, cybersecurity, artificial intelligence, research and entrepreneurship. P.S. I am currently Learning Artificial Intelligence and Machine Learning from Mr James Ebuka, a renowned AI/ML expert and mentor.",
   },
   {
     id: "what-i-do",
     title: "What I Do",
     image: "/whatido.jpg",
-    body: "I build digital solutions, explore intelligent systems, investigate security challenges and work on ideas that have the potential to create practical value. Alongside technology, I write, present, teach and communicate ideas, because solving a problem is only part of the process; being able to explain the solution matters too.",
+    body: "I fix problems. I build solutions. I make the world a better place through technology, by exploring intelligent systems, investigating security challenges and working on ideas that have the potential to create practical value. Alongside technology, I write, present, teach and communicate ideas, because solving a problem is only part of the process; being able to explain the solution matters too.",
   },
   {
     id: "how-i-think",
