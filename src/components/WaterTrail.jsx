@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react"
+import { gsap } from "gsap"
 
 /*
   WaterTrail
@@ -9,6 +10,10 @@ import React, { useEffect, useRef } from "react"
 
   Each ring drop also fires a "water:drop" event, which WaterRipple uses to
   push the hero video around.
+
+  Frame loop: runs on GSAP's shared ticker (the one Lenis is driven from in
+  App.jsx) instead of its own requestAnimationFrame loop. It is only on the
+  ticker while something is animating, and removed once everything settles.
 
   rgb: the ring color as "r,g,b". White suits dark backgrounds. On a bright
   background use something dark, e.g. "31,30,36".
@@ -46,10 +51,10 @@ export default function WaterTrail({ rgb = "255,255,255" }) {
     let vy = 0
     let started = false
     let running = false
-    let raf = 0
     const rings = []
 
-    const frame = (now) => {
+    const frame = () => {
+      const now = performance.now()
       const px = follower.x
       const py = follower.y
       follower.x += (target.x - follower.x) * FOLLOW
@@ -115,10 +120,9 @@ export default function WaterTrail({ rgb = "255,255,255" }) {
 
       const settled = Math.hypot(target.x - follower.x, target.y - follower.y) < 0.5
       if (rings.length === 0 && settled) {
-        running = false // nothing left to draw, so stop the loop
-        return
+        running = false // nothing left to draw, so leave the shared ticker
+        gsap.ticker.remove(frame)
       }
-      raf = requestAnimationFrame(frame)
     }
 
     const onMove = (e) => {
@@ -132,14 +136,14 @@ export default function WaterTrail({ rgb = "255,255,255" }) {
       }
       if (!running) {
         running = true
-        raf = requestAnimationFrame(frame)
+        gsap.ticker.add(frame)
       }
     }
 
     window.addEventListener("mousemove", onMove, { passive: true })
     window.addEventListener("resize", resize)
     return () => {
-      cancelAnimationFrame(raf)
+      gsap.ticker.remove(frame)
       window.removeEventListener("mousemove", onMove)
       window.removeEventListener("resize", resize)
     }

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react"
+import { gsap } from "gsap"
 
 /*
   WaterRipple
@@ -34,20 +35,31 @@ import React, { useEffect, useRef } from "react"
   result, none of the cost.
 */
 
-const MAX_CLICKS = 8
-const MAX_TRAIL = 10
-const TOTAL = MAX_CLICKS + MAX_TRAIL
+/*
+  --- Shared ticker ---
+  The render loop runs on GSAP's shared ticker (the one Lenis is driven from
+  in App.jsx) instead of its own requestAnimationFrame loop. Same idle-stop as
+  before: it is only on the ticker while a ripple is alive, and removed when
+  none is (or while the canvas is off-screen).
+*/
 
-const DURATION = 6.0
-const SPEED = 220.0
-const STRENGTH = 12.0
-const WAVE_FREQ = 0.1
-const TAIL = 0.006
-const SHINE = 0.02
+// ---- how many ripples can exist at once ----
+const MAX_CLICKS = 8 // click ripples alive at the same time; a 9th click reuses the oldest slot
+const MAX_TRAIL = 10 // mouse-trail ripples alive at the same time; same reuse rule
+const TOTAL = MAX_CLICKS + MAX_TRAIL // slots sent to the shader. More = more work per pixel on the GPU
 
-const TRAIL_DURATION = 1.8
-const TRAIL_SPEED = 130.0
-const TRAIL_POWER = 0.45
+// ---- click ripples (the "stone dropped in water") ----
+const DURATION = 6.0 // seconds a click ripple lives; it fades out over its last 1.5s
+const SPEED = 220.0 // how fast the ring spreads outward, in px per second
+const STRENGTH = 12.0 // how far the picture is pushed at the ring, in px. Bigger = stronger warp
+const WAVE_FREQ = 0.1 // how tight the waves are. Distance between crests = 2π / this (~63px). Higher = thinner, more packed rings
+const TAIL = 0.006 // how quickly the waves die off BEHIND the leading ring. Higher = only the front ring shows; lower = many rings trail behind it
+const SHINE = 0.02 // how much wave crests brighten and troughs darken the picture. 0 = pure warping, no highlights
+
+// ---- mouse-trail ripples (small ones left behind your cursor) ----
+const TRAIL_DURATION = 1.8 // seconds a trail ripple lives (short, so the trail stays light)
+const TRAIL_SPEED = 130.0 // how fast a trail ring spreads, px per second (slower than clicks)
+const TRAIL_POWER = 0.45 // strength of a trail ripple compared to a click one (0.45 = 45%)
 
 const VERTEX = `
 attribute vec2 a_pos;
@@ -272,7 +284,6 @@ export default function WaterRipple({ src, type = "video" }) {
         ? [media.naturalWidth, media.naturalHeight]
         : [media.videoWidth, media.videoHeight]
 
-    let raf = null
     let running = false
     const render = () => {
       const now = performance.now() / 1000
@@ -283,6 +294,7 @@ export default function WaterRipple({ src, type = "video" }) {
       if (!hasActiveRipples(now)) {
         setActive(false)
         running = false
+        gsap.ticker.remove(render)
         return
       }
 
@@ -305,14 +317,16 @@ export default function WaterRipple({ src, type = "video" }) {
       gl.uniform4fv(uRipples, uniformData)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
 
-      if (visible) raf = requestAnimationFrame(render)
-      else running = false // stop scheduling frames while off-screen
+      if (!visible) {
+        running = false // leave the ticker while off-screen
+        gsap.ticker.remove(render)
+      }
     }
     const wake = () => {
       // only worth running if there's an active ripple to actually show
       if (!running && active && mediaReady()) {
         running = true
-        raf = requestAnimationFrame(render)
+        gsap.ticker.add(render)
       }
     }
     // in case a ripple starts while media isn't ready yet
@@ -324,7 +338,7 @@ export default function WaterRipple({ src, type = "video" }) {
     }, 100)
 
     return () => {
-      cancelAnimationFrame(raf)
+      gsap.ticker.remove(render)
       clearInterval(readyPoll)
       document.removeEventListener("click", addClick)
       window.removeEventListener("water:drop", addTrail)

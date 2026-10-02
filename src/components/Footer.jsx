@@ -9,13 +9,16 @@ export default function Footer(props){
         
 
 <footer id="footer" className="relative flex flex-col items-center justify-center overflow-hidden text-[#EDEDF2]">
-  {/* BACKGROUND IMAGE: the height now lives on this wrapper, not the <img>,
-      so "h-full" on the image actually has something to size against */}
-  <div className="relative w-full min-h-[550px] lg:h-[600px]">
+  {/* BACKGROUND IMAGE: the wrapper is only a box for the image to fill.
+      Its height comes from the content below (min 550px, 600px on large
+      screens), so on a short/narrow screen where the content is taller than
+      550px the box grows with it and the image still covers everything,
+      instead of the content spilling out past the end of the image. */}
+  <div className="relative w-full">
     <img
       src="/footer.jpg"
       alt="Footer Background"
-      className="absolute inset-0 w-full h-full object-cover opacity-65"
+      className="absolute inset-0 w-full h-full object-cover opacity-60"
     />
 
     {/* GIANT WORDMARK - low in the footer, behind everything. Bumped up
@@ -33,9 +36,7 @@ export default function Footer(props){
 
     {/* CONTENT with slide-up */}
     <motion.div
-     
-      className="absolute inset-0 z-10 flex flex-col items-center justify-center px-8 py-12"
-     
+      className="relative z-10 flex flex-col items-center justify-center w-full min-h-[550px] lg:min-h-[600px] px-8 py-12"
     >
             {/* CLOCK FIRST */}
       <div className="text-center text-4xl bebas-neue-regular mb-6">
@@ -127,9 +128,6 @@ export default function Footer(props){
       </div>
     </motion.div>
   </div>
-
-  {/* THIN FINAL STRIP */}
-  <div className="w-full text-center text-sm py-4 border-t border-[#1F1E24] bg-[#1F1E24]"></div>
 </footer>
 
 </>

@@ -1,24 +1,43 @@
 import React, { useEffect, useRef, useState } from "react"
+import { gsap } from "gsap"
+import CustomScrollbar from "./CustomScrollbar"
 
 /*
   CustomCursor
   Desktop/trackpad (pointer: fine): the brown hand eases toward the real
-  mouse every frame (see FOLLOW), and swaps to the upright hand over
-  links/buttons.
+  mouse every frame (see FOLLOW). It has three looks:
+    normal  - the tilted hand
+    pointer - the upright pointing hand, over links/buttons
+    grab    - the OPEN hand (five fingers spread), over the custom scrollbar
+              and while dragging it. It is only a different picture: the hand
+              keeps following the mouse freely the whole time, never frozen.
+
+  Frame loop: the easing runs on GSAP's shared ticker (the same one Lenis is
+  driven from in App.jsx) instead of its own requestAnimationFrame loop, so
+  scroll and cursor are updated in the same frame, in order. It is only on the
+  ticker while the hand is actually catching up to the mouse, and removed once
+  settled (same idle-stop as before).
 
   Touch (pointer: coarse): there is no mouse to follow, so instead the
   cursor jumps straight to wherever the finger taps - "period", no lerp,
-  no lingering at a stale position. It was previously disabled outright on
-  touch, which is what left it stuck rendering at its default CSS position
-  (fixed top-0 left-0, the top-left corner) forever, since nothing ever
-  moved it. It now stays hidden until the first tap, then appears exactly
-  there and follows every subsequent tap.
+  no lingering at a stale position. It stays hidden until the first tap, then
+  appears exactly there and follows every subsequent tap.
+
+  <CustomScrollbar /> is rendered from here so App.jsx doesn't need to change.
 */
 
 const FOLLOW = 0.2
 const HOTSPOT_NORMAL = { x: 8, y: 4 } // fingertip on the tilted hand
 const HOTSPOT_HOVER = { x: 12.5, y: 1.5 } // fingertip on the upright hand
+const HOTSPOT_GRAB = { x: 15, y: 16 } // middle of the palm on the open hand
 const SIZE = 30
+
+const SRC = {
+  normal: "/hand.svg",
+  pointer: "/hand-pointer.svg",
+  grab: "/hand-open.svg",
+}
+const HOTSPOT = { normal: HOTSPOT_NORMAL, pointer: HOTSPOT_HOVER, grab: HOTSPOT_GRAB }
 
 export default function CustomCursor() {
   const imgRef = useRef(null)
@@ -57,59 +76,96 @@ export default function CustomCursor() {
     el.style.transition = "none"
     let target = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
     let pos = { ...target }
-    let hovering = false
-    let raf = null
+    let mode = "normal" // "normal" | "pointer" | "grab"
+    let lastTarget = null
     let running = false
 
+    // load the other two hands up front so the first swap never flashes
+    ;[SRC.pointer, SRC.grab].forEach((s) => {
+      const img = new Image()
+      img.src = s
+    })
+
     const isInteractive = (node) =>
-      node.closest?.("a, button, [role='button'], .cursor-pointer")
+      node?.closest?.("a, button, [role='button'], .cursor-pointer")
+
+    const modeFor = (node) => {
+      // dragging the scrollbar keeps the open hand even if the mouse leaves it
+      if (document.documentElement.hasAttribute("data-grabbing")) return "grab"
+      if (node?.closest?.("[data-grab-cursor]")) return "grab"
+      if (isInteractive(node)) return "pointer"
+      return "normal"
+    }
 
     const tick = () => {
-      const hotspot = hovering ? HOTSPOT_HOVER : HOTSPOT_NORMAL
+      const hotspot = HOTSPOT[mode]
       pos.x += (target.x - pos.x) * FOLLOW
       pos.y += (target.y - pos.y) * FOLLOW
       el.style.transform = `translate(${pos.x - hotspot.x}px, ${pos.y - hotspot.y}px)`
 
-      // once fully caught up there's nothing left to animate - stop
-      // scheduling frames rather than writing the same transform forever
+      // once fully caught up there's nothing left to animate - leave the
+      // shared ticker rather than writing the same transform forever
       if (Math.hypot(target.x - pos.x, target.y - pos.y) < 0.1) {
         running = false
-        return
+        gsap.ticker.remove(tick)
       }
-      raf = requestAnimationFrame(tick)
+    }
+
+    const kick = () => {
+      if (!running) {
+        running = true
+        gsap.ticker.add(tick)
+      }
+    }
+
+    const applyMode = (next) => {
+      if (next === mode) return
+      mode = next
+      el.src = SRC[mode]
+      kick() // re-place now, the hotspot changed
     }
 
     const onMove = (e) => {
       setVisible(true)
       target = { x: e.clientX, y: e.clientY }
-      const nowHovering = !!isInteractive(e.target)
-      if (nowHovering !== hovering) {
-        hovering = nowHovering
-        el.src = hovering ? "/hand-pointer.svg" : "/hand.svg"
-      }
-      if (!running) {
-        running = true
-        raf = requestAnimationFrame(tick)
-      }
+      lastTarget = e.target
+      applyMode(modeFor(e.target))
+      kick()
     }
 
-    document.addEventListener("mousemove", onMove, { passive: true })
+    // the scrollbar fires this when a drag starts/ends, when no mouse move
+    // happens to tell us the look should change
+    const onRefresh = () => {
+      applyMode(modeFor(lastTarget))
+      kick()
+    }
+
+    // "pointermove", not "mousemove": the scrollbar cancels its pointerdown
+    // (to stop text selection), and browsers then stop sending mousemove for
+    // the rest of the drag - which is what made the hand stay behind while
+    // you dragged. pointermove keeps firing the whole time.
+    document.addEventListener("pointermove", onMove, { passive: true })
+    window.addEventListener("cursor:refresh", onRefresh)
     return () => {
-      document.removeEventListener("mousemove", onMove)
-      if (raf) cancelAnimationFrame(raf)
+      document.removeEventListener("pointermove", onMove)
+      window.removeEventListener("cursor:refresh", onRefresh)
+      gsap.ticker.remove(tick)
     }
   }, [])
 
   return (
-    <img
-      ref={imgRef}
-      src="/hand.svg"
-      alt=""
-      aria-hidden="true"
-      width={SIZE}
-      height={SIZE}
-      className="fixed top-0 left-0 z-[999] pointer-events-none"
-      style={{ willChange: "transform", opacity: visible ? 1 : 0 }}
-    />
+    <>
+      <img
+        ref={imgRef}
+        src="/hand.svg"
+        alt=""
+        aria-hidden="true"
+        width={SIZE}
+        height={SIZE}
+        className="fixed top-0 left-0 z-[999] pointer-events-none"
+        style={{ willChange: "transform", opacity: visible ? 1 : 0 }}
+      />
+      <CustomScrollbar />
+    </>
   )
 }
