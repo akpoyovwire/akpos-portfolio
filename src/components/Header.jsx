@@ -24,7 +24,7 @@ export default function Header(props){
       textAnchor="middle"
     >
       <textPath href="#header-arc" startOffset="50%">
-        MEET THE VISIONARY
+        MEET THE VISION
       </textPath>
     </text>
   </svg>

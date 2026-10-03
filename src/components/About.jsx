@@ -74,6 +74,10 @@ const PARTS = [
   },
 ]
 
+// Hero -> About "settle". See the ScrollTrigger just above the tl below.
+// Set to false to go back to the old behaviour (nothing settles before the pin).
+const SETTLE_ON_APPROACH = true
+
 const HOLD = 0.6 // scroll spent resting on a part
 const MOVE = 1 // scroll spent changing from one part to the next
 
@@ -172,6 +176,31 @@ export default function About() {
             },
           },
         })
+
+        // HERO -> ABOUT SETTLE
+        // The snap inside the timeline's ScrollTrigger above only works once
+        // the pin has STARTED (About's top at the top of the screen). Before
+        // that, while About is still sliding up into view, nothing snaps - so
+        // if scrolling stops there (easy on a phone, where a flick just ends
+        // wherever momentum runs out) a strip of the hero stays on screen
+        // above About. This second trigger covers exactly that stretch, from
+        // "About's top enters the screen" to "About's top reaches the top
+        // (= where the pin starts)". It snaps to one end or the other, in the
+        // direction you were scrolling: down finishes onto About, up goes back
+        // to the hero. It makes no tweens and touches nothing in the timeline.
+        if (SETTLE_ON_APPROACH) {
+          ScrollTrigger.create({
+            trigger: wrapperRef.current,
+            start: "top bottom",
+            end: "top top",
+            snap: {
+              snapTo: [0, 1],
+              duration: { min: 0.2, max: 0.6 },
+              ease: "power1.inOut",
+            },
+            invalidateOnRefresh: true,
+          })
+        }
 
         tl.addLabel("settled-0").to({}, { duration: HOLD }) // part 0 sits and reads
 

@@ -79,7 +79,7 @@ className="text-4xl sm:text-6xl md:text-8xl over-the-rainbow-regular mb-4 pb-8 l
     transition={{ delay: 2, duration: 1 }}
 className="text-lg relative text-[#EDEDF2] mb-12 bebas-neue-regular -mt-5"
   >
-    Full-Stack Developer | Certified Cybersecurity Practitioner
+    Build. Secure. Innovate. Educate.
   </motion.p>
 
   {/* Floating Contact Icons with entrance */}

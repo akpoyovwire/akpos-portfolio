@@ -50,15 +50,15 @@ const TOTAL = MAX_CLICKS + MAX_TRAIL // slots sent to the shader. More = more wo
 
 // ---- click ripples (the "stone dropped in water") ----
 const DURATION = 6.0 // seconds a click ripple lives; it fades out over its last 1.5s
-const SPEED = 220.0 // how fast the ring spreads outward, in px per second
-const STRENGTH = 12.0 // how far the picture is pushed at the ring, in px. Bigger = stronger warp
+const SPEED = 300.0 // how fast the ring spreads outward, in px per second
+const STRENGTH = 20.0 // how far the picture is pushed at the ring, in px. Bigger = stronger warp
 const WAVE_FREQ = 0.1 // how tight the waves are. Distance between crests = 2π / this (~63px). Higher = thinner, more packed rings
 const TAIL = 0.006 // how quickly the waves die off BEHIND the leading ring. Higher = only the front ring shows; lower = many rings trail behind it
 const SHINE = 0.02 // how much wave crests brighten and troughs darken the picture. 0 = pure warping, no highlights
 
 // ---- mouse-trail ripples (small ones left behind your cursor) ----
-const TRAIL_DURATION = 1.8 // seconds a trail ripple lives (short, so the trail stays light)
-const TRAIL_SPEED = 130.0 // how fast a trail ring spreads, px per second (slower than clicks)
+const TRAIL_DURATION = 2 // seconds a trail ripple lives (short, so the trail stays light)
+const TRAIL_SPEED = 100.0 // how fast a trail ring spreads, px per second (slower than clicks)
 const TRAIL_POWER = 0.45 // strength of a trail ripple compared to a click one (0.45 = 45%)
 
 const VERTEX = `
