@@ -4,17 +4,25 @@ import { motion } from "framer-motion";
 // The first entry is real. The other four are placeholders until you have
 // screenshots and logos for them — set "image" to a real src and the
 // "Coming soon" placeholder disappears automatically.
+//
+// Each card shows MY logo big at the bottom-left, above the description
+// (same on every card), and the project's own app logo at the top-right. Set "appLogo" to the project's
+// real logo once you have it; until then the placeholder 💫 icon is used.
+const MY_LOGO = "/logo.svg";
+const PLACEHOLDER_LOGO = "/app-placeholder.svg";
+
 const WORKS = [
   {
     name: "DuetDays",
-    desc: "A productivity tracker built with React & Supabase. Includes user auth, real-time tasks, SEO indexing.",
+    desc: "A productivity tracker built.",
     link: "https://duet-days.lovable.app/",
     image: "/duetdays.jpg",
+    appLogo: "/duetdays-logo.png",
   },
-  { name: "#2", desc: "Patience is a Virtue.", link: null, image: null },
-  { name: "#3", desc: "Patience is a Virtue.", link: null, image: null },
-  { name: "#4", desc: "Patience is a Virtue.", link: null, image: null },
-  { name: "#5", desc: "Patience is a Virtue.", link: null, image: null },
+  { name: "#2", desc: "Patience is a Virtue.", link: null, image: null, appLogo: PLACEHOLDER_LOGO },
+  { name: "#3", desc: "Patience is a Virtue.", link: null, image: null, appLogo: PLACEHOLDER_LOGO },
+  { name: "#4", desc: "Patience is a Virtue.", link: null, image: null, appLogo: PLACEHOLDER_LOGO },
+  { name: "#5", desc: "Patience is a Virtue.", link: null, image: null, appLogo: PLACEHOLDER_LOGO },
 ];
 
 export default function Works(props) {
@@ -148,8 +156,25 @@ export default function Works(props) {
                   </div>
                 )}
 
+                {/* app logo, top-right. A soft dark fade behind it keeps it
+                    readable on bright screenshots. */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-end p-3 pb-10 bg-gradient-to-b from-black/45 to-transparent">
+                  <img
+                    src={p.appLogo}
+                    alt={`${p.name} logo`}
+                    className="h-9 w-9 rounded-[10px] object-cover shadow-md"
+                  />
+                </div>
+
                 {/* narration overlaid on the image itself, bottom edge */}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 pt-10">
+                  {/* my logo: big, bottom-left, directly above the description */}
+                  <img
+                    src={MY_LOGO}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-14 sm:h-22 w-auto mb-3 drop-shadow-lg pointer-events-none select-none"
+                  />
                   <p className="text-sm text-zinc-100">{p.desc}</p>
                   {p.link && (
                     <a
