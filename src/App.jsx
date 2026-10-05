@@ -203,22 +203,17 @@ updateClock();
   }, [introDone])
 
   /*
-    NEW: re-measure again once EVERYTHING has actually finished loading.
-    The refresh above (tied to introDone) fires as soon as the intro's text
+    Re-measure again once EVERYTHING has actually finished loading. The
+    refresh above (tied to introDone) fires as soon as the intro's text
     animation completes - which has nothing to do with whether the hero
     video, the About images, or any webfont have actually finished loading
-    yet. ScrollTrigger's pin/scroll-distance math is built from whatever
-    the DOM measures as at the moment it's calculated; if that happens
-    before a late-loading asset shifts the layout, the math is stale until
-    something forces a recompute. `window.load` fires only once every
-    resource on the page (images, video metadata, stylesheets) has
+    yet. `window.load` fires only once every resource on the page has
     finished, so this is the actual "everything has settled" signal -
     distinct from, and in addition to, the introDone refresh above.
   */
   useEffect(() => {
     const onLoad = () => ScrollTrigger.refresh()
     if (document.readyState === "complete") {
-      // already fully loaded by the time this effect ran
       ScrollTrigger.refresh()
     } else {
       window.addEventListener("load", onLoad)
@@ -263,6 +258,20 @@ updateClock();
     }
     gsap.ticker.add(onTick)
     gsap.ticker.lagSmoothing(0)
+
+    // NEW: let anything on the page fully pause/resume Lenis via a plain
+    // event, instead of needing a ref/prop passed down. Works.jsx's
+    // WorkDetails modal uses this - it dispatches "lenis:stop" the instant
+    // it opens and "lenis:start" on close, as a second, stronger layer on
+    // top of its own data-lenis-prevent + body-overflow lock, so there's
+    // no path left for scroll input over the modal to reach the page
+    // behind it. Same event-based pattern CustomScrollbar already uses to
+    // talk to CustomCursor (window.dispatchEvent(new Event(...))), just
+    // applied here instead of prop-drilling the lenis instance around.
+    const onLenisStop = () => lenis.stop()
+    const onLenisStart = () => lenis.start()
+    window.addEventListener("lenis:stop", onLenisStop)
+    window.addEventListener("lenis:start", onLenisStart)
 
     // NAV-LINK ARRIVAL SETTLE
     // `immediate: true` below has to stay a hard, instant jump - About's
@@ -313,6 +322,8 @@ updateClock();
     return () => {
       gsap.ticker.remove(onTick)
       document.removeEventListener("click", onAnchorClick)
+      window.removeEventListener("lenis:stop", onLenisStop)
+      window.removeEventListener("lenis:start", onLenisStart)
       lenis.destroy()
     }
   }, [])
