@@ -18,7 +18,7 @@ gsap.registerPlugin(SplitText);
 // Placeholder works: set "image" to a real src and the "Coming soon" panel
 // disappears automatically. Fill in the detail fields to replace the "---".
 const MY_LOGO = "/logo.svg";
-const PLACEHOLDER_LOGO = "/app-placeholder.svg";
+const PLACEHOLDER_LOGO = "/app-placeholder.png";
 const HOME = "/";
 const BLUE = "#4FA3D1";
 
@@ -496,7 +496,7 @@ export default function Works(props) {
                   <img
                     src={p.appLogo}
                     alt={`${p.name} logo`}
-                    className="h-10 w-10 rounded-[10px] object-cover shadow-md"
+                    className="h-10 w-10 rounded-[10px] object-cover "
                   />
                   <a
                     href={p.link ?? HOME}
