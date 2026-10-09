@@ -22,6 +22,14 @@ import React, { useEffect, useRef } from "react"
     (both are read by CustomCursor).
 
   Mounted from CustomCursor.jsx, so App.jsx needs no changes.
+
+  LOCKED WHILE A POP-UP IS OPEN
+  The project-details overlay (Works.jsx) dispatches "lenis:stop" when it opens
+  and "lenis:start" when it closes. For that whole window this scrollbar hides
+  and stops taking pointer input. It has to: it is z-[998], ABOVE the overlay
+  (z-[100]), and dragging it calls window.scrollTo, which still works on an
+  overflow-hidden body - so it was a way to scroll the page behind the overlay
+  all the way up to the hero while the overlay stayed open.
 */
 
 // ---- look (change here) ----
@@ -52,6 +60,7 @@ export default function CustomScrollbar() {
     let hovering = false
     let hideTimer = null
     let grabOffset = THUMB_H / 2 // pointer's distance from the thumb's top while dragging
+    let locked = false // true while a pop-up has the page locked
 
     const maxScroll = () => Math.max(0, root.scrollHeight - window.innerHeight)
     const travel = () => Math.max(1, hit.clientHeight - THUMB_H)
@@ -66,6 +75,7 @@ export default function CustomScrollbar() {
 
     // fade in now; schedule the fade out unless the mouse is on it / dragging
     const show = () => {
+      if (locked) return
       hit.style.opacity = "1"
       clearTimeout(hideTimer)
       if (!dragging && !hovering) {
@@ -88,6 +98,7 @@ export default function CustomScrollbar() {
     }
 
     const scrollToPointer = (clientY) => {
+      if (locked) return
       const rect = hit.getBoundingClientRect()
       const top = clamp(clientY - rect.top - grabOffset, 0, travel())
       const p = top / travel()
@@ -106,6 +117,7 @@ export default function CustomScrollbar() {
     }
 
     const onDown = (e) => {
+      if (locked) return
       if (e.button !== undefined && e.button !== 0) return
       e.preventDefault() // no text selection while dragging
       dragging = true
@@ -140,6 +152,24 @@ export default function CustomScrollbar() {
     hit.addEventListener("pointerup", onUp)
     hit.addEventListener("pointercancel", onUp)
 
+    // pop-up open: vanish and ignore the pointer; pop-up closed: back to normal
+    const lock = () => {
+      locked = true
+      dragging = false
+      hovering = false
+      clearTimeout(hideTimer)
+      hit.style.opacity = "0"
+      hit.style.pointerEvents = "none"
+      if (root.hasAttribute("data-grabbing")) setGrabbing(false)
+    }
+    const unlock = () => {
+      locked = false
+      hit.style.pointerEvents = ""
+      update()
+    }
+    window.addEventListener("lenis:stop", lock)
+    window.addEventListener("lenis:start", unlock)
+
     window.addEventListener("scroll", onScroll, { passive: true })
     window.addEventListener("resize", update)
     // page height changes as images load, pins are built, etc.
@@ -155,6 +185,8 @@ export default function CustomScrollbar() {
       hit.removeEventListener("pointermove", onMove)
       hit.removeEventListener("pointerup", onUp)
       hit.removeEventListener("pointercancel", onUp)
+      window.removeEventListener("lenis:stop", lock)
+      window.removeEventListener("lenis:start", unlock)
       window.removeEventListener("scroll", onScroll)
       window.removeEventListener("resize", update)
       ro.disconnect()

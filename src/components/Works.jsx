@@ -4,23 +4,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { SiTypescript, SiReact, SiSupabase, SiPostgresql, SiVercel } from "react-icons/si";
-import CustomScrollbar from "./CustomScrollbar";
 
 gsap.registerPlugin(SplitText);
 
 // Card layout (same on every card):
 //   top-left      the work's own logo ("appLogo")
-//   top-right     redirect icon (#4FA3D1). DuetDays -> its live site (new tab).
-//                 Works that aren't ready yet -> your home page.
-//   bottom-center your akpos logo (MY_LOGO)
-//   anywhere else clicking the card opens the details overlay.
+//   top-right     your akpos logo (MY_LOGO), same size the old redirect icon was
+//   everywhere    clicking the card opens the details overlay
+// There are no redirect links on the cards anymore.
 //
 // Placeholder works: set "image" to a real src and the "Coming soon" panel
 // disappears automatically. Fill in the detail fields to replace the "---".
 const MY_LOGO = "/logo.svg";
 const PLACEHOLDER_LOGO = "/app-placeholder.png";
-const HOME = "/";
-const BLUE = "#4FA3D1";
+
+// Two-finger trackpad swipe over the carousel:
+//   WHEEL_SPEED  how far it travels per swipe (1 = exactly the finger distance)
+//   WHEEL_GLIDE  0-1, how quickly it catches up to where the swipe is heading.
+//                Lower = longer, floatier glide (Lenis on the page uses 0.12).
+const WHEEL_SPEED = 10;
+const WHEEL_GLIDE = 0.12;
 
 // Tool icons for the details overlay. Add a key here, then use it in a
 // work's "tools" array. Supabase and PostgreSQL are separate entries, each
@@ -66,29 +69,6 @@ const WORKS = [
   { name: "#5", link: null, image: null, appLogo: PLACEHOLDER_LOGO, ...EMPTY },
 ];
 
-// Redirect icon (the "arrow out of a box" from your image), redrawn as SVG so
-// it takes the exact blue.
-function RedirectIcon({ className = "" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="26"
-      height="26"
-      fill="none"
-      stroke={BLUE}
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={className}
-    >
-      <path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6" />
-      <path d="M15 3h6v6" />
-      <path d="M10 14 21 3" />
-    </svg>
-  );
-}
-
 /*
   Details overlay. A modal on top of the current page (not a route).
   Its content plays About's reveal on its own as soon as it opens: title
@@ -100,26 +80,20 @@ function RedirectIcon({ className = "" }) {
   applied here, because the overlay is portaled to document.body and would
   otherwise lose the font the rest of the site inherits.
 
-  STRUCTURE (why there are two layers now, not one)
+  STRUCTURE (why the close button is NOT inside the blurred layer)
   `backdrop-filter` (the blur) on an element creates a new containing block
-  for any `position: fixed` descendant - the same way `transform` does. The
-  close button used to live inside the same div that was BOTH the blurred
-  backdrop AND the scroll container, so "fixed" was resolving against that
-  div's own box, not the real viewport - meaning it scrolled away with
-  everything else instead of staying put. Now the blur+scroll live on an
-  inner layer (`scrollRef`), and the close button is a sibling of that
-  layer, one level up, in a plain (non-filtered) wrapper - so it has
-  nothing but the real viewport to be fixed against.
+  for any `position: fixed` descendant - the same way `transform` does. So
+  the blur lives on its own inner layer, and the close button is a sibling of
+  that layer in a plain (non-filtered) wrapper - it has nothing but the real
+  viewport to be fixed against.
 
-  SCROLLING + CUSTOM SCROLLBAR
-  `scrollRef` is the actual scrolling box; `rootRef` is the inner content
-  wrapper that grows with the title/description/rows. CustomScrollbar gets
-  both: `containerRef={scrollRef}` for scrollTop/scrollTo, `contentRef=
-  {rootRef}` so it notices when the content's height changes (the scroll
-  box itself is a fixed, viewport-sized `absolute inset-0` - it never
-  resizes on its own, only its content does). Passing `containerRef` at all
-  is what tells CustomScrollbar this is a modal-scoped instance rather than
-  the main-page one - see that file's header for what that changes.
+  SCROLL
+  The blurred layer IS the scroller (overflow-y: auto), with its scrollbar
+  hidden, so wheel / touch / arrow keys / Space / PageDown all scroll the
+  pop-up content. The page behind is locked: body overflow, Lenis stopped
+  ("lenis:stop"), the main-page scrollbar hides and ignores the pointer on the
+  same event (CustomScrollbar.jsx), and wheel/touch events over the pop-up are
+  stopped from reaching window so nothing can move the page behind it.
 
   TEXT STYLE
   Every piece of text in here other than the title and the link now shares
@@ -127,26 +101,42 @@ function RedirectIcon({ className = "" }) {
   labels already used) - the description, the row values, and the tool
   names all inherit it. The link keeps its own orange.
 */
-const CLOSE_SPEED = 1.5; // how fast the reveal plays backwards (1 = same speed as opening)
+const CLOSE_SPEED = 1.8; // how fast the reveal plays backwards (1 = same speed as opening)
 const LABEL_STYLE = "text-xs tracking-widest uppercase text-zinc-400";
 const LABEL_SHAPE = "text-xs tracking-widest uppercase"; // same shape, no color - for elements that need a different color (the link)
 
 function WorkDetails({ work, onClose, fontFamily }) {
   const tlRef = useRef(null);
   const closingRef = useRef(false);
-  const scrollRef = useRef(null);
   const rootRef = useRef(null);
   const titleRef = useRef(null);
   const ruleRef = useRef(null);
   const bodyRef = useRef(null);
   const closeRef = useRef(null);
+  const scrollerRef = useRef(null);
+
+  // Wheel / touch over the pop-up must never reach window (Lenis and any other
+  // page-scroll code listen there). Nothing is prevented, so the pop-up still
+  // scrolls natively; the events just stop here.
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const stop = (e) => e.stopPropagation();
+    el.addEventListener("wheel", stop, { passive: true });
+    el.addEventListener("touchmove", stop, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", stop);
+      el.removeEventListener("touchmove", stop);
+    };
+  }, []);
 
   // play the reveal backwards, then unmount
   const requestClose = useCallback(() => {
     if (closingRef.current) return;
     closingRef.current = true;
     const tl = tlRef.current;
-    if (!tl) return onClose(); // reduced motion: nothing to reverse
+    // reduced motion, or closed before the reveal even started: nothing to reverse
+    if (!tl || tl.progress() === 0) return onClose();
     tl.eventCallback("onReverseComplete", onClose);
     tl.timeScale(CLOSE_SPEED).reverse();
   }, [onClose]);
@@ -160,17 +150,16 @@ function WorkDetails({ work, onClose, fontFamily }) {
     if (scrollbar > 0) document.body.style.paddingRight = `${scrollbar}px`;
 
     // Fully pause Lenis for as long as this is open - belt-and-suspenders
-    // with the body-overflow lock above and the scroll div's
-    // data-lenis-prevent, so there's no path left (wheel, touch, or
-    // Lenis's own virtual scroll state) for scroll input to leak through
-    // to the page behind. App.jsx listens for these two events; the
-    // main-page CustomScrollbar instance also listens, to hide itself
-    // while this is open.
+    // with the body-overflow lock above, so there's no path left (wheel,
+    // touch, or Lenis's own virtual scroll state) for scroll input to leak
+    // through to the page behind. App.jsx listens for these two events; the
+    // main-page scrollbar listens too, to hide itself and ignore the
+    // pointer while this is open.
     window.dispatchEvent(new CustomEvent("lenis:stop"));
 
     const onKey = (e) => e.key === "Escape" && requestClose();
     window.addEventListener("keydown", onKey);
-    closeRef.current?.focus();
+    scrollerRef.current?.focus({ preventScroll: true });
 
     return () => {
       document.body.style.overflow = prevOverflow;
@@ -275,12 +264,15 @@ function WorkDetails({ work, onClose, fontFamily }) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25 }}
     >
-      {/* SCROLL LAYER - the blur + the actual scrolling live here, and
-          nowhere else, on purpose (see the containing-block note above). */}
+      {/* BLUR + SCROLL LAYER - the glass background lives here, and nowhere
+          else, on purpose (see the containing-block note above). It scrolls,
+          with its scrollbar hidden. data-lenis-prevent tells Lenis to leave
+          scrolling over it alone. */}
       <div
-        ref={scrollRef}
+        ref={scrollerRef}
+        tabIndex={-1}
         data-lenis-prevent
-        className="absolute inset-0 overflow-y-auto bg-[#17161b]/90 backdrop-blur-[6px] [&::-webkit-scrollbar]:hidden"
+        className="absolute inset-0 overflow-y-auto overscroll-contain bg-[#17161b]/90 backdrop-blur-[6px] outline-none [&::-webkit-scrollbar]:hidden"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         <div ref={rootRef} className="mx-auto w-full max-w-6xl px-6 pt-24 pb-16 md:pt-28">
@@ -313,12 +305,8 @@ function WorkDetails({ work, onClose, fontFamily }) {
         </div>
       </div>
 
-      {/* this overlay's own scrollbar, scoped to the scroll layer above -
-          not the main page's (that one hides itself while this is open) */}
-      <CustomScrollbar containerRef={scrollRef} contentRef={rootRef} />
-
-      {/* CLOSE BUTTON - a sibling of the scroll layer above, not a child of
-          it, so it's genuinely fixed to the viewport and never scrolls. */}
+      {/* CLOSE BUTTON - a sibling of the blur layer above, not a child of
+          it, so it's genuinely fixed to the viewport. */}
       <button
         ref={closeRef}
         onClick={requestClose}
@@ -336,11 +324,11 @@ function WorkDetails({ work, onClose, fontFamily }) {
 export default function Works(props) {
   const trackRef = useRef(null);
   const sliderRef = useRef(null);
+  const knobRef = useRef(null); // the dial knob; moved directly, not through React state
   const dragging = useRef(false);
 
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
-  const [progress, setProgress] = useState(0); // 0-1, drives the volume-dial knob
   const sectionRef = useRef(null);
   const [active, setActive] = useState(null); // { work, fontFamily } while details are open
 
@@ -349,13 +337,19 @@ export default function Works(props) {
     setActive({ work, fontFamily });
   };
 
+  // The knob position used to be React state (setProgress), which re-rendered
+  // this whole component - the section, all five cards - on every single
+  // scroll frame while swiping. It's now written straight to the knob's
+  // style. setAtStart / setAtEnd only cause a re-render when they actually
+  // flip (React skips a set to the same value).
   const syncFromScroll = () => {
     const el = trackRef.current;
     if (!el) return;
     const max = el.scrollWidth - el.clientWidth;
     setAtStart(el.scrollLeft <= 4);
     setAtEnd(el.scrollLeft >= max - 4);
-    setProgress(max > 0 ? el.scrollLeft / max : 0);
+    const p = max > 0 ? el.scrollLeft / max : 0;
+    if (knobRef.current) knobRef.current.style.left = `calc(${p * 100}% - 8px)`;
   };
 
   // Batched via requestAnimationFrame, same pattern as the rest of the
@@ -376,6 +370,64 @@ export default function Works(props) {
     return () => {
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  // TWO-FINGER TRACKPAD SWIPE (and shift+wheel) over the carousel.
+  // Two things were going on:
+  //  1) Lenis listens for wheel on window and, for any swipe with even a tiny
+  //     vertical part (every real swipe has one), cancels the browser's
+  //     native scroll and moves the PAGE instead - so the carousel only got
+  //     the rare perfectly-horizontal events.
+  //  2) The browser's own trackpad scrolling also adds MOMENTUM: a short flick
+  //     keeps coasting after your fingers lift. The moment we take the swipe
+  //     over (preventDefault) that built-in momentum is gone, so the
+  //     carousel stopped dead when your fingers did and felt slow.
+  // So: a mostly-horizontal swipe is stopped before Lenis, and instead of
+  // jumping scrollLeft, it moves a TARGET that the carousel glides toward
+  // every frame (same idea Lenis uses for the page). Mostly-vertical swipes
+  // are left alone, so scrolling the page over the carousel still works.
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    let target = el.scrollLeft;
+    let pos = el.scrollLeft;
+    let running = false;
+
+    const tick = () => {
+      pos += (target - pos) * WHEEL_GLIDE;
+      if (Math.abs(target - pos) < 0.5) {
+        pos = target;
+        running = false;
+        gsap.ticker.remove(tick);
+      }
+      el.scrollLeft = pos;
+    };
+
+    const onWheel = (e) => {
+      const horizontalIntent = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
+      if (!horizontalIntent) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      // if something else moved the carousel (arrows, dial), start from there
+      if (!running) target = pos = el.scrollLeft;
+
+      const raw = e.shiftKey ? e.deltaY || e.deltaX : e.deltaX;
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? el.clientWidth : 1;
+      const max = el.scrollWidth - el.clientWidth;
+      target = Math.min(max, Math.max(0, target + raw * unit * WHEEL_SPEED));
+
+      if (!running) {
+        running = true;
+        gsap.ticker.add(tick);
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      gsap.ticker.remove(tick);
     };
   }, []);
 
@@ -439,9 +491,11 @@ export default function Works(props) {
           <button
             onClick={() => scrollByPage(-1)}
             aria-label="Previous work"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white text-xl flex items-center justify-center"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center"
           >
-            ‹
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" />
+            </svg>
           </button>
         )}
 
@@ -459,8 +513,7 @@ export default function Works(props) {
                 {p.name}
               </p>
 
-              {/* clicking anywhere on the card (except the redirect icon)
-                  opens the details overlay */}
+              {/* clicking anywhere on the card opens the details overlay */}
               <div
                 role="button"
                 tabIndex={0}
@@ -488,36 +541,24 @@ export default function Works(props) {
                   </div>
                 )}
 
-                {/* top bar: the work's own logo (left), redirect icon (right).
-                    A soft dark fade keeps both readable on bright screenshots.
-                    The bar ignores clicks so they fall through to the card;
-                    only the redirect icon takes them. */}
+                {/* top bar: the work's own logo (left), my logo (right, same
+                    40px box the redirect icon used). A soft dark fade keeps
+                    both readable on bright screenshots. Purely decorative,
+                    so it ignores clicks and they fall through to the card. */}
                 <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-3 pb-10 bg-gradient-to-b from-black/45 to-transparent">
                   <img
                     src={p.appLogo}
                     alt={`${p.name} logo`}
                     className="h-10 w-10 rounded-[10px] object-cover "
                   />
-                  <a
-                    href={p.link ?? HOME}
-                    {...(p.link ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    aria-label={p.link ? `Visit ${p.name}` : "Go to home page"}
-                    className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-[10px] hover:scale-110 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#4FA3D1]"
-                  >
-                    <RedirectIcon />
-                  </a>
-                </div>
-
-                {/* my logo, bottom-center */}
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pt-16 pb-4">
-                  <img
-                    src={MY_LOGO}
-                    alt=""
-                    aria-hidden="true"
-                    className="h-10 sm:h-14 w-auto drop-shadow-lg select-none"
-                  />
+                  <div className="flex h-10 w-10 items-center justify-center">
+                    <img
+                      src={MY_LOGO}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-7 w-7 object-contain select-none"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -528,9 +569,11 @@ export default function Works(props) {
           <button
             onClick={() => scrollByPage(1)}
             aria-label="Next work"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white text-xl flex items-center justify-center"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center"
           >
-            ›
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
           </button>
         )}
       </div>
@@ -552,8 +595,8 @@ export default function Works(props) {
         style={{ background: "linear-gradient(to right, #4FA3D1, #E4572E)" }}
       >
         <div
-          className="absolute top-1/2 w-4 h-4 rounded-full bg-[#1F1E24] border border-[#6d697e] shadow"
-          style={{ left: `calc(${progress * 100}% - 8px)`, transform: "translateY(-50%)" }}
+          ref={knobRef}
+          className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#1F1E24] border border-[#6d697e] shadow"
         />
       </div>
 

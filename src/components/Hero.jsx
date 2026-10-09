@@ -8,11 +8,17 @@ export default function Hero(){
     return(
         <>
 
+{/* minHeight is 100vh, NOT 100dvh, on purpose. On a phone 100dvh changes
+    whenever the browser's address bar hides/shows (~56px), so this section
+    changed height after About's pin had already been measured. About then
+    pinned ~56px too early and its transparent stage showed the bottom of
+    this hero behind it. 100vh is the fixed large-screen height on mobile, so
+    the hero never resizes while scrolling and the pin lines up exactly. */}
 <motion.section
   id="home"
   initial="hidden"
   animate="visible"
-    style={{ minHeight: "100dvh" }}
+    style={{ minHeight: "100vh" }}
   className="relative px-6 py-48 text-center flex flex-col items-center justify-center overflow-hidden"
 >
  
