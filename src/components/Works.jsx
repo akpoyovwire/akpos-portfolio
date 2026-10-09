@@ -22,7 +22,7 @@ const PLACEHOLDER_LOGO = "/app-placeholder.png";
 //   WHEEL_SPEED  how far it travels per swipe (1 = exactly the finger distance)
 //   WHEEL_GLIDE  0-1, how quickly it catches up to where the swipe is heading.
 //                Lower = longer, floatier glide (Lenis on the page uses 0.12).
-const WHEEL_SPEED = 10;
+const WHEEL_SPEED = 5;
 const WHEEL_GLIDE = 0.12;
 
 // Tool icons for the details overlay. Add a key here, then use it in a
@@ -40,7 +40,7 @@ const TOOLS = {
 // Default detail fields for works that aren't ready yet
 const EMPTY = {
   title: "Coming soon",
-  details: "Coming soon",
+  details: "Patience is a Virtue",
   period: "---",
   role: "---",
   sector: "---",
