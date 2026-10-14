@@ -45,7 +45,7 @@ export default function Footer(props){
 
       {/* Vertical Nav */}
       <div className="flex flex-col items-center mb-8">
-        {["Home", "About", "Tools", "Works"].map((tab, idx) => (
+        {["Home", "About", "Expertise", "Works"].map((tab, idx) => (
           <React.Fragment key={idx}>
             <a
               href={`#${tab.toLowerCase()}`}
@@ -80,12 +80,12 @@ export default function Footer(props){
           },
           {
             icon: <Github size={20} color="#FFFFFF" />,
-            href: "https://github.com/dahgrate",
+            href: "https://github.com/akpoyovwire",
             slideFrom: "bottom",
           },
           {
             icon: <Linkedin size={20} color="#0A66C2" />,
-            href: "https://www.linkedin.com/in/akpos-ogbon-3aa291351",
+            href: "https://www.linkedin.com/in/akpoyovwire/",
             slideFrom: "top",
           },
           {

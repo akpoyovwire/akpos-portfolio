@@ -10,7 +10,6 @@ import Ripple from "./components/Ripple"
 import Footer from "./components/Footer"
 import Works from "./components/Works"
 import Expertise from "./components/Expertise"
-import Tools from "./components/Tools"
 import About from "./components/About"
 import Hero from "./components/Hero"
 import Header from "./components/Header"
@@ -145,11 +144,9 @@ function SectionStack({ sections }) {
 export default function App() {
 const [isOpen, setIsOpen] = useState(false)
 const [scrollTarget, setScrollTarget] = useState("#footer")
-const [toolDescription, setToolDescription] = useState(null);
 const [time, setTime] = useState("")
 const [worksInView, setworksInView] = useState(false)
 const [expertiseInView, setExpertiseInView] = useState(false)
-const [toolsInView, setToolsInView] = useState(false)
 const [introDone, setIntroDone] = useState(false)
 const lenisRef = useRef(null)
 
@@ -168,8 +165,7 @@ const typedworksHeading = useTypingEffect("works", 80, worksInView)
 // EXPERTISE
 const typedExpertiseHeading = useTypingEffect("Expertise", 80, expertiseInView)
 
-// TOOLS
-const typedToolsHeading = useTypingEffect("Tools & Stack", 80, toolsInView)
+
 
 useEffect(() => {
   const updateClock = () => {
@@ -295,7 +291,6 @@ updateClock();
     // frame. Opacity never does that, so one effect is safe for every
     // destination, About included.
     //
-    // For "tools"/"expertise"/"works", the element with that id is a 1x1px
     // invisible scroll-position marker (see SectionStack above) - fading
     // that would be invisible. `[data-section="id"]` (added in StackLayer)
     // is the actual visible content instead. "home"/"about"/"footer" have
@@ -400,13 +395,7 @@ function useTypingEffect(text, speed = 50, active = true) {
   };
 
 
-  const expertiseList = [
-    { icon: <FaReact />, label: "Frontend Development", desc: "Modern, responsive interfaces with React and friends." },
-    { icon: <Database />, label: "Backend Integration", desc: "Connecting frontend to secure backend services like Supabase." },
-    { icon: <Pencil />, label: "Design Customization", desc: "Unique, user-focused designs directed to the last detail." },
-    { icon: <Folder />, label: "Project Planning", desc: "Research-driven project setup, clear user flows & structure." },
-    { icon: <Home />, label: "SEO & Visibility", desc: "Making your site discoverable and visible to the world." },
-  ];
+
 
 
 return (
@@ -440,24 +429,11 @@ setIsOpen={setIsOpen}
 <SectionStack
   sections={[
     {
-      id: "tools",
-      style: sectionBgStyle,
-      node: (
-        <Tools
-          setToolDescription={setToolDescription}
-          toolDescription={toolDescription}
-          typedToolsHeading={typedToolsHeading}
-          setToolsInView={setToolsInView}
-          sectionFade={sectionFade}
-        />
-      ),
-    },
-    {
       id: "expertise",
       style: sectionBgStyle,
       node: (
         <Expertise
-          expertiseList={expertiseList}
+          
           sectionFade={sectionFade}
           typedExpertiseHeading={typedExpertiseHeading}
           setExpertiseInView={setExpertiseInView}
