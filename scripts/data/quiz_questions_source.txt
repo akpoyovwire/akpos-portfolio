@@ -1,0 +1,1121 @@
+# QUIZ QUESTION BANK  (edit this file, then run:  python scripts/build_quiz.py)
+#
+# One block per question:
+#
+#   ## id | Category | difficulty         <- id must be unique, e.g. geo-012
+#   Q: the question text
+#   + the CORRECT answer                  <- exactly ONE line starting with +
+#   - a wrong answer                      <- exactly THREE lines starting with -
+#   - a wrong answer
+#   - a wrong answer
+#   Why: one short sentence explaining the answer
+#   Source: where to check it (a place to look, NOT proof it was checked)
+#   Verified: no                          <- change to "yes" only after YOU have checked the fact
+#
+# Categories (spell exactly): Movies and television | Music | Politics and government |
+#   Art and literature | History | Geography | Science and technology | Sports |
+#   Famous people and culture | General knowledge
+# Difficulty: easy or medium.  Blank lines and lines starting with a single # are ignored.
+# Answer order does not matter: the game shuffles the four options every time.
+# Politics questions must stay factual and neutral. Avoid anything that changes over time
+# (current office holders, records, populations).
+
+## mov-001 | Movies and television | easy
+Q: Which fictional African country is the home of Black Panther?
++ Wakanda
+- Zamunda
+- Genovia
+- Latveria
+Why: Wakanda is the hidden, high-tech nation in Marvel's Black Panther.
+Source: Encyclopaedia Britannica: Black Panther
+Verified: no
+
+## mov-002 | Movies and television | easy
+Q: Which studio made the first Toy Story film?
++ Pixar
+- DreamWorks
+- Illumination
+- Blue Sky Studios
+Why: Toy Story (1995) was Pixar's first feature film.
+Source: Encyclopaedia Britannica: Toy Story
+Verified: no
+
+## mov-003 | Movies and television | easy
+Q: In The Lion King, what is the name of Simba's father?
++ Mufasa
+- Scar
+- Rafiki
+- Zazu
+Why: Mufasa is the king and Simba's father; Scar is his brother.
+Source: Disney: The Lion King
+Verified: no
+
+## mov-004 | Movies and television | easy
+Q: Which TV series is set in the fictional continents of Westeros and Essos?
++ Game of Thrones
+- The Witcher
+- Vikings
+- The Last Kingdom
+Why: Game of Thrones takes place in Westeros and Essos.
+Source: HBO: Game of Thrones
+Verified: no
+
+## mov-005 | Movies and television | medium
+Q: Who directed the 1997 film Titanic?
++ James Cameron
+- Steven Spielberg
+- Christopher Nolan
+- Ridley Scott
+Why: James Cameron wrote and directed Titanic.
+Source: Encyclopaedia Britannica: Titanic (1997 film)
+Verified: no
+
+## mov-006 | Movies and television | easy
+Q: What is the name of the coffee shop in the TV show Friends?
++ Central Perk
+- The Daily Grind
+- Java Joe's
+- Brew Haven
+Why: The friends spend much of the show on the sofa at Central Perk.
+Source: Encyclopaedia Britannica: Friends
+Verified: no
+
+## mov-007 | Movies and television | medium
+Q: Which film won Best Picture at the 2020 Academy Awards, the first non-English-language film to do so?
++ Parasite
+- Roma
+- Minari
+- Drive My Car
+Why: South Korea's Parasite made Oscars history in 2020.
+Source: Academy Awards (oscars.org): 92nd Academy Awards
+Verified: no
+
+## mov-008 | Movies and television | easy
+Q: In Finding Nemo, what is the name of Nemo's father?
++ Marlin
+- Gill
+- Bruce
+- Crush
+Why: Marlin the clownfish crosses the ocean to find his son.
+Source: Disney Pixar: Finding Nemo
+Verified: no
+
+## mov-009 | Movies and television | easy
+Q: Nollywood is the name of the film industry of which country?
++ Nigeria
+- Ghana
+- Kenya
+- South Africa
+Why: Nollywood is Nigeria's film industry, one of the largest in the world by number of films.
+Source: Encyclopaedia Britannica: Nollywood
+Verified: no
+
+## mov-010 | Movies and television | easy
+Q: Which actor plays Iron Man in the Marvel Cinematic Universe?
++ Robert Downey Jr.
+- Chris Evans
+- Chris Hemsworth
+- Mark Ruffalo
+Why: Robert Downey Jr. played Tony Stark from 2008's Iron Man onwards.
+Source: Marvel Studios: Iron Man
+Verified: no
+
+## mov-011 | Movies and television | easy
+Q: In which country is the TV series Squid Game set?
++ South Korea
+- Japan
+- China
+- Thailand
+Why: Squid Game is a South Korean series.
+Source: Encyclopaedia Britannica: Squid Game
+Verified: no
+
+## mus-001 | Music | easy
+Q: How many strings does a standard guitar have?
++ 6
+- 4
+- 5
+- 8
+Why: A standard guitar has six strings (a bass guitar usually has four).
+Source: Encyclopaedia Britannica: guitar
+Verified: no
+
+## mus-002 | Music | medium
+Q: Which Nigerian musician is credited as the pioneer of Afrobeat?
++ Fela Kuti
+- King Sunny Ade
+- Ebenezer Obey
+- Sade Adu
+Why: Fela Kuti created Afrobeat in the late 1960s and 1970s.
+Source: Encyclopaedia Britannica: Fela Kuti
+Verified: no
+
+## mus-003 | Music | easy
+Q: Which band recorded the song "Bohemian Rhapsody"?
++ Queen
+- The Rolling Stones
+- Led Zeppelin
+- Pink Floyd
+Why: Queen released "Bohemian Rhapsody" in 1975.
+Source: Encyclopaedia Britannica: Queen
+Verified: no
+
+## mus-004 | Music | easy
+Q: Which country is the birthplace of reggae music?
++ Jamaica
+- Cuba
+- Brazil
+- Trinidad and Tobago
+Why: Reggae developed in Jamaica in the late 1960s.
+Source: Encyclopaedia Britannica: reggae
+Verified: no
+
+## mus-005 | Music | easy
+Q: What does the musical term "forte" mean?
++ Loud
+- Soft
+- Fast
+- Slow
+Why: Forte is the Italian word for strong and means to play loudly.
+Source: Encyclopaedia Britannica: forte
+Verified: no
+
+## mus-006 | Music | medium
+Q: How many symphonies did Ludwig van Beethoven complete?
++ 9
+- 5
+- 12
+- 41
+Why: Beethoven completed nine symphonies; Mozart wrote about 41.
+Source: Encyclopaedia Britannica: Ludwig van Beethoven
+Verified: no
+
+## mus-007 | Music | easy
+Q: Which instrument family does the cello belong to?
++ Strings
+- Woodwind
+- Brass
+- Percussion
+Why: The cello is a bowed string instrument.
+Source: Encyclopaedia Britannica: cello
+Verified: no
+
+## mus-008 | Music | easy
+Q: Beyoncé was a member of which group before her solo career?
++ Destiny's Child
+- TLC
+- The Supremes
+- En Vogue
+Why: Beyoncé rose to fame in Destiny's Child in the 1990s.
+Source: Encyclopaedia Britannica: Beyoncé
+Verified: no
+
+## mus-009 | Music | easy
+Q: Which singer is known as the "King of Pop"?
++ Michael Jackson
+- Elvis Presley
+- Prince
+- Justin Timberlake
+Why: Michael Jackson was given the nickname "King of Pop".
+Source: Encyclopaedia Britannica: Michael Jackson
+Verified: no
+
+## mus-010 | Music | medium
+Q: Which composer wrote "The Four Seasons"?
++ Antonio Vivaldi
+- Johann Sebastian Bach
+- Wolfgang Amadeus Mozart
+- Frédéric Chopin
+Why: Vivaldi composed The Four Seasons, a set of four violin concertos.
+Source: Encyclopaedia Britannica: The Four Seasons
+Verified: no
+
+## mus-011 | Music | easy
+Q: A musical group of four performers is called a what?
++ Quartet
+- Trio
+- Quintet
+- Octet
+Why: Quartet comes from the Latin for four.
+Source: Encyclopaedia Britannica: quartet
+Verified: no
+
+## pol-001 | Politics and government | medium
+Q: How many permanent members does the United Nations Security Council have?
++ 5
+- 3
+- 10
+- 15
+Why: China, France, Russia, the United Kingdom and the United States are the five permanent members.
+Source: United Nations (un.org): Security Council
+Verified: no
+
+## pol-002 | Politics and government | easy
+Q: What does the word "democracy" mean in its Greek roots?
++ Rule by the people
+- Rule by one person
+- Rule by the wealthy
+- Rule by the military
+Why: It comes from demos (people) and kratos (rule).
+Source: Encyclopaedia Britannica: democracy
+Verified: no
+
+## pol-003 | Politics and government | easy
+Q: In a presidential system of government, who is both head of state and head of government?
++ The president
+- The chief justice
+- The speaker of the legislature
+- The prime minister
+Why: In a presidential system, such as Nigeria's or the United States', the president holds both roles.
+Source: Encyclopaedia Britannica: presidential system
+Verified: no
+
+## pol-004 | Politics and government | easy
+Q: What is the name of Nigeria's national legislature?
++ The National Assembly
+- The Parliament
+- The Congress
+- The Diet
+Why: The National Assembly has two chambers: the Senate and the House of Representatives.
+Source: Constitution of the Federal Republic of Nigeria
+Verified: no
+
+## pol-005 | Politics and government | medium
+Q: What is the minimum voting age in Nigeria?
++ 18
+- 16
+- 21
+- 25
+Why: Nigerians can vote from the age of 18.
+Source: Constitution of the Federal Republic of Nigeria; INEC
+Verified: no
+
+## pol-006 | Politics and government | medium
+Q: What is a government led by a king or queen whose powers are limited by a constitution called?
++ A constitutional monarchy
+- An absolute monarchy
+- A republic
+- A theocracy
+Why: In a constitutional monarchy the monarch shares power under a constitution.
+Source: Encyclopaedia Britannica: constitutional monarchy
+Verified: no
+
+## pol-007 | Politics and government | easy
+Q: Which international organisation was founded in 1945 to promote peace and cooperation between countries?
++ The United Nations
+- The African Union
+- NATO
+- The European Union
+Why: The United Nations was founded in 1945, after World War II.
+Source: United Nations (un.org): history
+Verified: no
+
+## pol-008 | Politics and government | medium
+Q: What is the name for a vote in which citizens approve or reject one specific proposal?
++ A referendum
+- A census
+- A filibuster
+- An impeachment
+Why: A referendum asks voters a direct yes-or-no question.
+Source: Encyclopaedia Britannica: referendum
+Verified: no
+
+## pol-009 | Politics and government | easy
+Q: In the United States, how many senators does each state have?
++ Two
+- One
+- Three
+- Four
+Why: Every state has two senators, regardless of its size.
+Source: United States Senate (senate.gov)
+Verified: no
+
+## pol-010 | Politics and government | easy
+Q: What do we call the document that sets out the basic laws and principles of a country?
++ A constitution
+- A manifesto
+- A census
+- A budget
+Why: A constitution defines how a country is governed.
+Source: Encyclopaedia Britannica: constitution
+Verified: no
+
+## pol-011 | Politics and government | easy
+Q: Which branch of government interprets the law and settles legal disputes?
++ The judiciary
+- The executive
+- The legislature
+- The civil service
+Why: Courts and judges make up the judiciary.
+Source: Encyclopaedia Britannica: separation of powers
+Verified: no
+
+## art-001 | Art and literature | easy
+Q: Who painted the Mona Lisa?
++ Leonardo da Vinci
+- Michelangelo
+- Raphael
+- Vincent van Gogh
+Why: Leonardo da Vinci painted it in the early 1500s.
+Source: Musée du Louvre: Mona Lisa
+Verified: no
+
+## art-002 | Art and literature | easy
+Q: Who wrote the novel Things Fall Apart?
++ Chinua Achebe
+- Wole Soyinka
+- Chimamanda Ngozi Adichie
+- Ngũgĩ wa Thiong'o
+Why: Chinua Achebe published Things Fall Apart in 1958.
+Source: Encyclopaedia Britannica: Things Fall Apart
+Verified: no
+
+## art-003 | Art and literature | easy
+Q: Who wrote the play Romeo and Juliet?
++ William Shakespeare
+- Christopher Marlowe
+- Charles Dickens
+- Oscar Wilde
+Why: Shakespeare wrote Romeo and Juliet in the 1590s.
+Source: Encyclopaedia Britannica: Romeo and Juliet
+Verified: no
+
+## art-004 | Art and literature | medium
+Q: Which Nigerian writer became the first African to win the Nobel Prize in Literature, in 1986?
++ Wole Soyinka
+- Chinua Achebe
+- Ben Okri
+- Buchi Emecheta
+Why: Wole Soyinka received the 1986 Nobel Prize in Literature.
+Source: NobelPrize.org: Wole Soyinka
+Verified: no
+
+## art-005 | Art and literature | easy
+Q: Who painted "The Starry Night"?
++ Vincent van Gogh
+- Claude Monet
+- Pablo Picasso
+- Salvador Dalí
+Why: Van Gogh painted it in 1889.
+Source: Museum of Modern Art (moma.org): The Starry Night
+Verified: no
+
+## art-006 | Art and literature | medium
+Q: Who wrote the novel 1984?
++ George Orwell
+- Aldous Huxley
+- Ray Bradbury
+- H. G. Wells
+Why: George Orwell published Nineteen Eighty-Four in 1949.
+Source: Encyclopaedia Britannica: Nineteen Eighty-four
+Verified: no
+
+## art-007 | Art and literature | medium
+Q: Which Greek poet is traditionally credited with the Iliad and the Odyssey?
++ Homer
+- Sophocles
+- Virgil
+- Aristotle
+Why: Homer is the traditional author; Virgil was a Roman poet.
+Source: Encyclopaedia Britannica: Homer
+Verified: no
+
+## art-008 | Art and literature | easy
+Q: In which city is the Louvre museum?
++ Paris
+- Rome
+- London
+- Madrid
+Why: The Louvre is in Paris, France.
+Source: Musée du Louvre
+Verified: no
+
+## art-009 | Art and literature | medium
+Q: Who created the detective Sherlock Holmes?
++ Arthur Conan Doyle
+- Agatha Christie
+- Edgar Allan Poe
+- Raymond Chandler
+Why: Arthur Conan Doyle introduced Sherlock Holmes in 1887.
+Source: Encyclopaedia Britannica: Sherlock Holmes
+Verified: no
+
+## art-010 | Art and literature | medium
+Q: Who wrote the novel Americanah?
++ Chimamanda Ngozi Adichie
+- Buchi Emecheta
+- Helon Habila
+- Teju Cole
+Why: Adichie published Americanah in 2013.
+Source: Encyclopaedia Britannica: Chimamanda Ngozi Adichie
+Verified: no
+
+## art-011 | Art and literature | medium
+Q: Which artist painted "Guernica"?
++ Pablo Picasso
+- Joan Miró
+- Salvador Dalí
+- Francisco Goya
+Why: Picasso painted Guernica in 1937 in response to the bombing of the Spanish town.
+Source: Museo Reina Sofía: Guernica
+Verified: no
+
+## his-001 | History | easy
+Q: In which year did Nigeria become independent from Britain?
++ 1960
+- 1957
+- 1963
+- 1966
+Why: Nigeria became independent on 1 October 1960.
+Source: Encyclopaedia Britannica: Nigeria
+Verified: no
+
+## his-002 | History | medium
+Q: Who was the first president of Nigeria?
++ Nnamdi Azikiwe
+- Tafawa Balewa
+- Obafemi Awolowo
+- Olusegun Obasanjo
+Why: Nnamdi Azikiwe became president when Nigeria became a republic in 1963; Balewa was prime minister.
+Source: Encyclopaedia Britannica: Nnamdi Azikiwe
+Verified: no
+
+## his-003 | History | easy
+Q: In which year did World War II end?
++ 1945
+- 1939
+- 1918
+- 1950
+Why: The war ended in 1945.
+Source: Encyclopaedia Britannica: World War II
+Verified: no
+
+## his-004 | History | easy
+Q: Who was the first president of the United States?
++ George Washington
+- Thomas Jefferson
+- Abraham Lincoln
+- John Adams
+Why: George Washington served from 1789 to 1797.
+Source: White House (whitehouse.gov): Presidents
+Verified: no
+
+## his-005 | History | medium
+Q: Which ancient civilisation built Machu Picchu?
++ The Inca
+- The Maya
+- The Aztec
+- The Olmec
+Why: The Inca built Machu Picchu in the Andes in the 1400s.
+Source: UNESCO World Heritage: Machu Picchu
+Verified: no
+
+## his-006 | History | medium
+Q: In which year did the Berlin Wall fall?
++ 1989
+- 1961
+- 1991
+- 1979
+Why: The Wall opened on 9 November 1989; it had been built in 1961.
+Source: Encyclopaedia Britannica: Berlin Wall
+Verified: no
+
+## his-007 | History | easy
+Q: Which ship sank on its first voyage in April 1912 after hitting an iceberg?
++ The Titanic
+- The Lusitania
+- The Britannic
+- The Mayflower
+Why: The RMS Titanic sank on 15 April 1912.
+Source: Encyclopaedia Britannica: Titanic
+Verified: no
+
+## his-008 | History | easy
+Q: Which empire built the Colosseum in Rome?
++ The Roman Empire
+- The Persian Empire
+- The Ottoman Empire
+- The Greek city-states
+Why: The Colosseum was built under Roman emperors in the first century AD.
+Source: Encyclopaedia Britannica: Colosseum
+Verified: no
+
+## his-009 | History | medium
+Q: Mansa Musa, famous for his wealth and pilgrimage to Mecca, ruled which empire?
++ The Mali Empire
+- The Songhai Empire
+- The Ghana Empire
+- The Oyo Empire
+Why: Mansa Musa ruled the Mali Empire in the early 1300s.
+Source: Encyclopaedia Britannica: Mansa Musa
+Verified: no
+
+## his-010 | History | easy
+Q: In which year did Christopher Columbus first reach the Americas?
++ 1492
+- 1066
+- 1607
+- 1776
+Why: Columbus's first voyage reached the Caribbean in 1492.
+Source: Encyclopaedia Britannica: Christopher Columbus
+Verified: no
+
+## his-011 | History | easy
+Q: Who led the non-violent movement that helped win India's independence from Britain?
++ Mahatma Gandhi
+- Nelson Mandela
+- Martin Luther King Jr.
+- Ho Chi Minh
+Why: Gandhi led the campaign of non-violent civil disobedience; India became independent in 1947.
+Source: Encyclopaedia Britannica: Mahatma Gandhi
+Verified: no
+
+## geo-001 | Geography | easy
+Q: What is the capital city of Nigeria?
++ Abuja
+- Lagos
+- Kano
+- Port Harcourt
+Why: Abuja replaced Lagos as the capital in 1991.
+Source: Encyclopaedia Britannica: Abuja
+Verified: no
+
+## geo-002 | Geography | easy
+Q: In which Nigerian state is Port Harcourt?
++ Rivers State
+- Delta State
+- Bayelsa State
+- Cross River State
+Why: Port Harcourt is the capital of Rivers State.
+Source: Encyclopaedia Britannica: Port Harcourt
+Verified: no
+
+## geo-003 | Geography | easy
+Q: Which is the longest river in Africa?
++ The Nile
+- The Niger
+- The Congo
+- The Zambezi
+Why: The Nile is the longest river in Africa.
+Source: Encyclopaedia Britannica: Nile River
+Verified: no
+
+## geo-004 | Geography | easy
+Q: Which is the largest ocean on Earth?
++ The Pacific Ocean
+- The Atlantic Ocean
+- The Indian Ocean
+- The Arctic Ocean
+Why: The Pacific covers about a third of the planet's surface.
+Source: NOAA: ocean facts
+Verified: no
+
+## geo-005 | Geography | medium
+Q: Mount Kilimanjaro, the highest mountain in Africa, is in which country?
++ Tanzania
+- Kenya
+- Uganda
+- Ethiopia
+Why: Kilimanjaro rises in northeastern Tanzania.
+Source: Encyclopaedia Britannica: Mount Kilimanjaro
+Verified: no
+
+## geo-006 | Geography | easy
+Q: What is the capital city of Ghana?
++ Accra
+- Kumasi
+- Lomé
+- Abidjan
+Why: Accra is Ghana's capital and largest city.
+Source: Encyclopaedia Britannica: Accra
+Verified: no
+
+## geo-007 | Geography | medium
+Q: Which is the largest hot desert in the world?
++ The Sahara
+- The Gobi
+- The Kalahari
+- The Arabian Desert
+Why: The Sahara covers much of North Africa.
+Source: Encyclopaedia Britannica: Sahara
+Verified: no
+
+## geo-008 | Geography | easy
+Q: What is the capital city of Australia?
++ Canberra
+- Sydney
+- Melbourne
+- Perth
+Why: Canberra was purpose-built as the capital; Sydney is just the largest city.
+Source: Encyclopaedia Britannica: Canberra
+Verified: no
+
+## geo-009 | Geography | easy
+Q: By the most common way of counting, how many continents are there?
++ 7
+- 5
+- 6
+- 8
+Why: The usual count is Africa, Antarctica, Asia, Australia/Oceania, Europe, North America and South America.
+Source: National Geographic: continents
+Verified: no
+
+## geo-010 | Geography | easy
+Q: In which country is the city of Rio de Janeiro?
++ Brazil
+- Argentina
+- Portugal
+- Colombia
+Why: Rio de Janeiro is in southeastern Brazil.
+Source: Encyclopaedia Britannica: Rio de Janeiro
+Verified: no
+
+## geo-011 | Geography | medium
+Q: Which is the largest lake in Africa by area?
++ Lake Victoria
+- Lake Chad
+- Lake Tanganyika
+- Lake Malawi
+Why: Lake Victoria is Africa's largest lake by surface area.
+Source: Encyclopaedia Britannica: Lake Victoria
+Verified: no
+
+## sci-001 | Science and technology | easy
+Q: What is the chemical formula for water?
++ H2O
+- CO2
+- O2
+- NaCl
+Why: Each water molecule has two hydrogen atoms and one oxygen atom.
+Source: Encyclopaedia Britannica: water
+Verified: no
+
+## sci-002 | Science and technology | easy
+Q: Which planet is closest to the Sun?
++ Mercury
+- Venus
+- Mars
+- Earth
+Why: Mercury orbits closest to the Sun.
+Source: NASA: Mercury
+Verified: no
+
+## sci-003 | Science and technology | easy
+Q: What does CPU stand for in computing?
++ Central Processing Unit
+- Central Program Utility
+- Computer Personal Unit
+- Core Processing Usage
+Why: The CPU carries out a computer's instructions.
+Source: Encyclopaedia Britannica: central processing unit
+Verified: no
+
+## sci-004 | Science and technology | easy
+Q: Which gas do plants take in from the air for photosynthesis?
++ Carbon dioxide
+- Oxygen
+- Nitrogen
+- Hydrogen
+Why: Plants use carbon dioxide, water and light to make sugars and release oxygen.
+Source: Encyclopaedia Britannica: photosynthesis
+Verified: no
+
+## sci-005 | Science and technology | easy
+Q: Which part of a cell is known as its powerhouse?
++ The mitochondrion
+- The nucleus
+- The ribosome
+- The chloroplast
+Why: Mitochondria release most of a cell's usable energy.
+Source: Encyclopaedia Britannica: mitochondrion
+Verified: no
+
+## sci-006 | Science and technology | easy
+Q: What does HTML stand for?
++ HyperText Markup Language
+- HighText Machine Language
+- Hyperlink and Text Management Language
+- Home Tool Markup Language
+Why: HTML describes the structure of web pages.
+Source: MDN Web Docs: HTML
+Verified: no
+
+## sci-007 | Science and technology | medium
+Q: How many bones are in the adult human body?
++ 206
+- 150
+- 300
+- 212
+Why: Babies are born with more bones, which fuse into 206 in adults.
+Source: Encyclopaedia Britannica: human skeleton
+Verified: no
+
+## sci-008 | Science and technology | medium
+Q: Which element has the chemical symbol Au?
++ Gold
+- Silver
+- Aluminium
+- Argon
+Why: Au comes from the Latin word aurum.
+Source: Royal Society of Chemistry: gold
+Verified: no
+
+## sci-009 | Science and technology | easy
+Q: Who developed the theory of general relativity?
++ Albert Einstein
+- Isaac Newton
+- Niels Bohr
+- Stephen Hawking
+Why: Einstein published general relativity in 1915.
+Source: Encyclopaedia Britannica: general relativity
+Verified: no
+
+## sci-010 | Science and technology | medium
+Q: What does RAM stand for in a computer?
++ Random Access Memory
+- Rapid Access Module
+- Read And Move
+- Remote Access Memory
+Why: RAM is the fast, temporary memory a computer uses while it works.
+Source: Encyclopaedia Britannica: random-access memory
+Verified: no
+
+## sci-011 | Science and technology | medium
+Q: What is the hardest naturally occurring substance?
++ Diamond
+- Quartz
+- Granite
+- Iron
+Why: Diamond is the hardest natural material.
+Source: Encyclopaedia Britannica: diamond
+Verified: no
+
+## spo-001 | Sports | easy
+Q: How many players from one team are on the pitch in a football (soccer) match?
++ 11
+- 9
+- 10
+- 12
+Why: Each team has eleven players on the pitch, including the goalkeeper.
+Source: IFAB Laws of the Game
+Verified: no
+
+## spo-002 | Sports | medium
+Q: Which country won the 2022 FIFA World Cup?
++ Argentina
+- France
+- Brazil
+- Croatia
+Why: Argentina beat France on penalties in the 2022 final in Qatar.
+Source: FIFA (fifa.com): World Cup 2022
+Verified: no
+
+## spo-003 | Sports | easy
+Q: What is the nickname of Nigeria's national men's football team?
++ The Super Eagles
+- The Black Stars
+- The Indomitable Lions
+- The Pharaohs
+Why: The Super Eagles are Nigeria's team; the Black Stars are Ghana's.
+Source: Nigeria Football Federation
+Verified: no
+
+## spo-004 | Sports | easy
+Q: How many rings are on the Olympic flag?
++ 5
+- 4
+- 6
+- 7
+Why: The five rings stand for the five inhabited continents in the original design.
+Source: Olympics (olympics.com): Olympic rings
+Verified: no
+
+## spo-005 | Sports | easy
+Q: In which sport would you use a shuttlecock?
++ Badminton
+- Tennis
+- Squash
+- Table tennis
+Why: Badminton is played with rackets and a shuttlecock.
+Source: Encyclopaedia Britannica: badminton
+Verified: no
+
+## spo-006 | Sports | easy
+Q: Which colour of card does a football referee show to send a player off?
++ Red
+- Yellow
+- Blue
+- Green
+Why: A red card means the player must leave the pitch.
+Source: IFAB Laws of the Game
+Verified: no
+
+## spo-007 | Sports | medium
+Q: How long is a full marathon?
++ 42.195 km
+- 26.2 km
+- 35 km
+- 50 km
+Why: A marathon is 42.195 kilometres, which is 26.2 miles.
+Source: World Athletics: marathon
+Verified: no
+
+## spo-008 | Sports | medium
+Q: Which country hosted the 2016 Summer Olympic Games?
++ Brazil
+- China
+- The United Kingdom
+- Japan
+Why: Rio de Janeiro hosted the 2016 Games.
+Source: Olympics (olympics.com): Rio 2016
+Verified: no
+
+## spo-009 | Sports | medium
+Q: How many points is a touchdown worth in American football, before the extra point?
++ 6
+- 3
+- 7
+- 5
+Why: A touchdown scores six points.
+Source: NFL (nfl.com): scoring
+Verified: no
+
+## spo-010 | Sports | easy
+Q: Which sport is played at the Wimbledon Championships?
++ Tennis
+- Cricket
+- Golf
+- Rugby
+Why: Wimbledon is a grass-court tennis tournament in London.
+Source: Wimbledon (wimbledon.com)
+Verified: no
+
+## spo-011 | Sports | easy
+Q: Which country is the sprinter Usain Bolt from?
++ Jamaica
+- The United States
+- Trinidad and Tobago
+- Kenya
+Why: Usain Bolt is from Jamaica.
+Source: Encyclopaedia Britannica: Usain Bolt
+Verified: no
+
+## fam-001 | Famous people and culture | medium
+Q: Who was the first woman to win a Nobel Prize?
++ Marie Curie
+- Mother Teresa
+- Malala Yousafzai
+- Rosalind Franklin
+Why: Marie Curie shared the 1903 Nobel Prize in Physics.
+Source: NobelPrize.org: Marie Curie
+Verified: no
+
+## fam-002 | Famous people and culture | medium
+Q: Which Kenyan environmentalist won the 2004 Nobel Peace Prize for her work planting trees?
++ Wangari Maathai
+- Ellen Johnson Sirleaf
+- Leymah Gbowee
+- Graça Machel
+Why: Wangari Maathai founded the Green Belt Movement.
+Source: NobelPrize.org: Wangari Maathai
+Verified: no
+
+## fam-003 | Famous people and culture | medium
+Q: For roughly how many years was Nelson Mandela imprisoned?
++ 27
+- 10
+- 18
+- 35
+Why: Mandela was in prison for about 27 years before his release in 1990.
+Source: Nelson Mandela Foundation
+Verified: no
+
+## fam-004 | Famous people and culture | easy
+Q: Who co-founded Microsoft with Paul Allen?
++ Bill Gates
+- Steve Jobs
+- Mark Zuckerberg
+- Jeff Bezos
+Why: Bill Gates and Paul Allen founded Microsoft in 1975.
+Source: Encyclopaedia Britannica: Microsoft
+Verified: no
+
+## fam-005 | Famous people and culture | medium
+Q: Which festival is known as the "Festival of Colours"?
++ Holi
+- Diwali
+- Eid
+- Hanukkah
+Why: Holi is the Hindu spring festival where people throw coloured powder.
+Source: Encyclopaedia Britannica: Holi
+Verified: no
+
+## fam-006 | Famous people and culture | medium
+Q: Kente cloth is a famous traditional fabric from which country?
++ Ghana
+- Nigeria
+- Senegal
+- Mali
+Why: Kente is closely tied to the Akan peoples of Ghana.
+Source: Encyclopaedia Britannica: kente
+Verified: no
+
+## fam-007 | Famous people and culture | easy
+Q: Which country is famous for the annual Rio Carnival?
++ Brazil
+- Mexico
+- Spain
+- Cuba
+Why: The Rio Carnival is held each year in Rio de Janeiro, Brazil.
+Source: Encyclopaedia Britannica: Carnival
+Verified: no
+
+## fam-008 | Famous people and culture | easy
+Q: Which country is the origin of the dish sushi?
++ Japan
+- China
+- Korea
+- Thailand
+Why: Sushi as we know it developed in Japan.
+Source: Encyclopaedia Britannica: sushi
+Verified: no
+
+## fam-009 | Famous people and culture | easy
+Q: Malala Yousafzai is known for campaigning for what?
++ Girls' education
+- Space exploration
+- Free trade
+- Wildlife protection
+Why: Malala campaigns for girls' right to education and won the Nobel Peace Prize in 2014.
+Source: NobelPrize.org: Malala Yousafzai
+Verified: no
+
+## fam-010 | Famous people and culture | easy
+Q: Which Portuguese footballer is famous for playing for clubs including Real Madrid and Manchester United?
++ Cristiano Ronaldo
+- Lionel Messi
+- Neymar
+- Kylian Mbappé
+Why: Cristiano Ronaldo played for both clubs during his career.
+Source: Encyclopaedia Britannica: Cristiano Ronaldo
+Verified: no
+
+## fam-011 | Famous people and culture | medium
+Q: Which festival, known as the Festival of Lights, is celebrated by Hindus, Sikhs and Jains?
++ Diwali
+- Holi
+- Eid al-Fitr
+- Christmas
+Why: Diwali is the festival of lights.
+Source: Encyclopaedia Britannica: Diwali
+Verified: no
+
+## gen-001 | General knowledge | easy
+Q: How many days are there in a leap year?
++ 366
+- 365
+- 364
+- 367
+Why: A leap year adds one extra day, 29 February.
+Source: Encyclopaedia Britannica: leap year
+Verified: no
+
+## gen-002 | General knowledge | easy
+Q: What is the currency of Nigeria?
++ The naira
+- The cedi
+- The rand
+- The shilling
+Why: The naira has been Nigeria's currency since 1973.
+Source: Central Bank of Nigeria (cbn.gov.ng)
+Verified: no
+
+## gen-003 | General knowledge | easy
+Q: What is the largest mammal in the world?
++ The blue whale
+- The African elephant
+- The giraffe
+- The hippopotamus
+Why: The blue whale is the largest animal known to have lived.
+Source: NOAA Fisheries: blue whale
+Verified: no
+
+## gen-004 | General knowledge | easy
+Q: What is the fastest land animal?
++ The cheetah
+- The lion
+- The horse
+- The antelope
+Why: The cheetah can sprint at about 100 km/h in short bursts.
+Source: Encyclopaedia Britannica: cheetah
+Verified: no
+
+## gen-005 | General knowledge | easy
+Q: How many colours are there in a rainbow, as they are traditionally counted?
++ 7
+- 5
+- 6
+- 8
+Why: Red, orange, yellow, green, blue, indigo and violet.
+Source: Encyclopaedia Britannica: rainbow
+Verified: no
+
+## gen-006 | General knowledge | easy
+Q: What is the currency of Japan?
++ The yen
+- The won
+- The yuan
+- The ringgit
+Why: The yen is Japan's currency.
+Source: Bank of Japan (boj.or.jp)
+Verified: no
+
+## gen-007 | General knowledge | medium
+Q: What is the smallest prime number?
++ 2
+- 1
+- 3
+- 0
+Why: 2 is the smallest prime and the only even prime; 1 is not prime.
+Source: Encyclopaedia Britannica: prime number
+Verified: no
+
+## gen-008 | General knowledge | easy
+Q: What shape is a standard stop sign?
++ An octagon
+- A hexagon
+- A circle
+- A square
+Why: Stop signs have eight sides in most countries.
+Source: Encyclopaedia Britannica: stop sign
+Verified: no
+
+## gen-009 | General knowledge | easy
+Q: What is the scientific study of the weather called?
++ Meteorology
+- Geology
+- Astronomy
+- Ecology
+Why: Meteorology studies the atmosphere and weather.
+Source: Encyclopaedia Britannica: meteorology
+Verified: no
+
+## gen-010 | General knowledge | easy
+Q: Which bird is widely used as a symbol of peace?
++ The dove
+- The eagle
+- The owl
+- The swan
+Why: The dove, often with an olive branch, is a symbol of peace.
+Source: Encyclopaedia Britannica: dove
+Verified: no
+
+## gen-011 | General knowledge | easy
+Q: What is the square root of 144?
++ 12
+- 14
+- 11
+- 13
+Why: 12 times 12 equals 144.
+Source: Encyclopaedia Britannica: square root
+Verified: no

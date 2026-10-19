@@ -1,0 +1,14 @@
+# Words that must NEVER be an answer, even if they appear in the answers file.
+# The build script stops with an error if one of these is found there.
+# Add more, one per line (4 lowercase letters).
+fuck
+shit
+piss
+cunt
+dick
+cock
+slut
+twat
+tits
+damn
+hell

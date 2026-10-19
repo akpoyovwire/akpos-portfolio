@@ -1,0 +1,84 @@
+/* Font utility classes (.butcherman-regular, .atma-bold, ...). Loaded from main.jsx. */
+
+.butcherman-regular {
+  font-family: "Butcherman", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.hanalei-fill-regular {
+  font-family: "Hanalei Fill", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.peralta-regular {
+  font-family: "Peralta", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.anton-sc-regular {
+  font-family: "Anton SC", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.over-the-rainbow-regular {
+  font-family: "Over the Rainbow", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.monoton-regular {
+  font-family: "Monoton", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.bigelow-rules-regular {
+  font-family: "Bigelow Rules", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.voltaire-regular {
+  font-family: "Voltaire", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.bebas-neue-regular {
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+.atma-light { font-family: "Atma", system-ui; font-weight: 300; font-style: normal; }
+
+.atma-regular { font-family: "Atma", system-ui; font-weight: 400; font-style: normal; }
+
+.atma-medium { font-family: "Atma", system-ui; font-weight: 500; font-style: normal; }
+
+.atma-semibold { font-family: "Atma", system-ui; font-weight: 600; font-style: normal; }
+
+.atma-bold { font-family: "Atma", system-ui; font-weight: 700; font-style: normal; }
+
+.parisienne-regular {
+  font-family: "Parisienne", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.charm-regular {
+  font-family: "Charm", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.charm-bold {
+  font-family: "Charm", cursive;
+  font-weight: 700;
+  font-style: normal;
+}

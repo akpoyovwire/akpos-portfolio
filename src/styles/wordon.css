@@ -1,0 +1,269 @@
+
+/* =====================================================================
+   WORDON  (.wordon-*)
+   Reuses .rps-score*, .rps-status*, .rps-actions and .activity-game-btn.
+   Green = right letter in the right place, yellow = right letter in the
+   wrong place, grey = letter not in the word.
+   ===================================================================== */
+.wordon {
+  --tile: min(3.5rem, 7.2vh, 15vw);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* centred with auto margins below, so tall content never climbs under the intro text */
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 0;
+}
+.wordon > .wordon-bar,
+.wordon > .rps-status-main:first-child {
+  margin-top: auto;
+}
+.wordon > .wordon-actions,
+.wordon > .wordon-stats,
+.wordon > .rps-status-main:only-child,
+.wordon > .rps-status-sub:last-child {
+  margin-bottom: auto;
+}
+.wordon-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.wordon-bar .activity-game-btn {
+  min-height: 2.25rem;
+  padding: 0.2rem 1rem;
+  font-size: 1rem;
+}
+.wordon .rps-status {
+  min-height: 2.9rem;
+}
+.wordon .rps-status-main {
+  font-size: 1.6rem;
+}
+.wordon-actions {
+  min-height: 2.75rem;
+}
+
+/* board: rows x columns come from the game (MAX_ATTEMPTS x WORD_LENGTH) */
+.wordon-grid {
+  display: grid;
+  grid-template-rows: repeat(var(--rows, 6), var(--tile));
+  gap: 0.3rem;
+}
+.wordon-row {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), var(--tile));
+  gap: 0.3rem;
+}
+.wordon-tile {
+  --tile-bg: transparent;
+  --tile-border: #3d4046;
+  --tile-color: #f4f4f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: calc(var(--tile) * 0.62);
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--tile-color);
+  background: var(--tile-bg);
+  border: 2px solid var(--tile-border);
+  border-radius: 0.4rem;
+  user-select: none;
+}
+.wordon-tile--typing {
+  --tile-border: #8a8699;
+  animation: wordon-pop 0.12s ease-out;
+}
+.wordon-tile--correct {
+  --tile-bg: #3f9d6b;
+  --tile-border: #3f9d6b;
+}
+.wordon-tile--present {
+  --tile-bg: #d7a73a;
+  --tile-border: #d7a73a;
+  --tile-color: #1f1e24;
+}
+.wordon-tile--absent {
+  --tile-bg: #3a3d44;
+  --tile-border: #3a3d44;
+}
+/* each tile flips, one after the other. Keep the 250ms in sync with FLIP_STAGGER_MS in Wordon.jsx.
+   The colour switches at the half-way point, while the tile is edge-on. */
+.wordon-tile--flip {
+  animation: wordon-flip 0.5s ease-in-out both;
+  animation-delay: calc(var(--i) * 250ms);
+}
+@keyframes wordon-flip {
+  0% { transform: rotateX(0); background: transparent; border-color: #8a8699; color: #f4f4f5; }
+  49% { transform: rotateX(90deg); background: transparent; border-color: #8a8699; color: #f4f4f5; }
+  50% { transform: rotateX(90deg); background: var(--tile-bg); border-color: var(--tile-border); color: var(--tile-color); }
+  100% { transform: rotateX(0); background: var(--tile-bg); border-color: var(--tile-border); color: var(--tile-color); }
+}
+@keyframes wordon-pop {
+  50% { transform: scale(1.08); }
+}
+.wordon-row--shake {
+  animation: wordon-shake 0.45s ease-in-out;
+}
+@keyframes wordon-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* on-screen keyboard */
+.wordon-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+}
+.wordon-keys {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.wordon-key {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  max-width: 2.9rem;
+  height: clamp(2.5rem, 5.8vh, 3.2rem);
+  padding: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  color: #f4f4f5;
+  background: #3f434b;
+  border: 0;
+  border-radius: 0.4rem;
+  touch-action: manipulation;
+  transition: background 0.25s, transform 0.1s, opacity 0.2s;
+}
+.wordon-key--wide {
+  flex: 1.7 1 0;
+  max-width: 4.6rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+}
+.wordon-key:hover:not([aria-disabled="true"]) {
+  background: #4b505a;
+}
+.wordon-key:active:not([aria-disabled="true"]) {
+  transform: scale(0.95);
+}
+.wordon-key:focus-visible {
+  outline: 2px solid #4fa3d1;
+  outline-offset: 2px;
+}
+.wordon-key[aria-disabled="true"] {
+  opacity: 0.5;
+}
+.wordon-key--correct,
+.wordon-key--correct:hover:not([aria-disabled="true"]) {
+  background: #3f9d6b;
+}
+.wordon-key--present,
+.wordon-key--present:hover:not([aria-disabled="true"]) {
+  color: #1f1e24;
+  background: #d7a73a;
+}
+.wordon-key--absent,
+.wordon-key--absent:hover:not([aria-disabled="true"]) {
+  color: #8a8699;
+  background: #1d1f23;
+}
+
+/* statistics panel */
+.wordon-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+}
+.wordon-dist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: min(100%, 22rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wordon-dist-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.wordon-dist-label {
+  width: 1rem;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.1rem;
+  color: #a1a1aa;
+  text-align: center;
+}
+.wordon-dist-bar {
+  box-sizing: border-box;
+  width: var(--share, 8%);
+  min-width: 1.75rem;
+  padding: 0.1rem 0.5rem;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.1rem;
+  text-align: right;
+  color: #fff;
+  background: #3f9d6b;
+  border-radius: 0.25rem;
+}
+
+/* read out by screen readers only */
+.wordon-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* phones: smaller tiles and keys so the whole game fits under the title and intro text */
+@media (max-width: 899px) {
+  .wordon {
+    --tile: min(clamp(2.2rem, calc((100vh - 40rem) / 6), 3.2rem), 15vw);
+    gap: 0.5rem;
+  }
+  .wordon-key {
+    height: clamp(2.25rem, 5vh, 2.8rem);
+  }
+}
+@media (max-height: 640px) {
+  .wordon {
+    --tile: min(3rem, 6.6vh, 15vw);
+    gap: 0.4rem;
+  }
+  .wordon .rps-status {
+    min-height: 2.4rem;
+  }
+  .wordon .rps-status-main {
+    font-size: 1.35rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wordon-tile--flip,
+  .wordon-tile--typing,
+  .wordon-row--shake { animation: none; }
+  .wordon-key { transition: none; }
+}

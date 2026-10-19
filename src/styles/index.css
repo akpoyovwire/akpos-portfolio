@@ -1,0 +1,53 @@
+/* Base styles: Tailwind, page background, hidden scrollbar and custom cursor.
+   Fonts -> styles/fonts.css, effects -> styles/effects.css,
+   Activity Center -> styles/activity-center.css (all loaded from main.jsx) */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  scroll-behavior: smooth;
+  background-color: #1F1E24;
+}
+
+body {
+  position: relative;
+}
+
+/* Native cursor hidden everywhere, no exceptions: CustomCursor.jsx draws the
+   brown hand instead. "*" with !important is used deliberately, not a list
+   of tags — Tailwind's cursor-pointer/cursor-* utilities set cursor directly
+   on an element, which otherwise beats the inherited "none" from html and
+   brings the OS pointer back on exactly the elements that carry them. Only
+   on fine pointers (mouse/trackpad); touch devices are untouched. */
+@media (pointer: fine) {
+  *, *::before, *::after {
+    cursor: none !important;
+  }
+}
+
+/* The page's own vertical scrollbar, hidden site-wide. Scrolling still works
+   via wheel, trackpad, touch and keyboard - only the visible track/thumb is
+   gone, since a native scrollbar can't be recolored or given a custom cursor
+   (it's browser chrome, not part of the DOM). */
+html {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
+/* Utility for any element (like the work carousel track) that needs its
+   own scroll but no visible native scrollbar either. */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

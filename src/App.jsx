@@ -6,17 +6,18 @@ import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import Lenis from "lenis"
 import "lenis/dist/lenis.css"
-import Ripple from "./components/Ripple"
-import Footer from "./components/Footer"
-import Works from "./components/Works"
-import Expertise from "./components/Expertise"
-import About from "./components/About"
-import Hero from "./components/Hero"
-import Header from "./components/Header"
-import ScrollArrow from "./components/ScrollArrow"
-import WaterTrail from "./components/WaterTrail"
-import CustomCursor from "./components/CustomCursor"
-import Intro from "./components/Intro"
+import Ripple from "./components/effects/Ripple"
+import Footer from "./components/layout/Footer"
+import Works from "./components/sections/Works"
+import Expertise from "./components/sections/Expertise"
+import About from "./components/sections/About"
+import Hero from "./components/sections/Hero"
+import Header from "./components/layout/Header"
+import ScrollArrow from "./components/effects/ScrollArrow"
+import WaterTrail from "./components/effects/WaterTrail"
+import CustomCursor from "./components/effects/CustomCursor"
+import Intro from "./components/intro/Intro"
+import ActivityCenter from "./components/sections/ActivityCenter/ActivityCenter"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -106,6 +107,19 @@ function StackLayer({ id, index, total, progress, style, children }) {
     </motion.div>
   )
 }
+  function ClockedFooter() {
+    const [time, setTime] = useState("")
+    useEffect(() => {
+      const tick = () => {
+        const n = new Date()
+        setTime(`${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}:${String(n.getSeconds()).padStart(2, "0")}`)
+      }
+      tick()
+      const id = setInterval(tick, 1000)
+      return () => clearInterval(id)
+    }, [])
+    return <Footer time={time} />
+  }
 
 function SectionStack({ sections }) {
   const containerRef = useRef(null)
@@ -144,10 +158,13 @@ function SectionStack({ sections }) {
 export default function App() {
 const [isOpen, setIsOpen] = useState(false)
 const [scrollTarget, setScrollTarget] = useState("#footer")
-const [time, setTime] = useState("")
 const [worksInView, setworksInView] = useState(false)
 const [expertiseInView, setExpertiseInView] = useState(false)
 const [introDone, setIntroDone] = useState(false)
+// The site behind the intro is mounted only once the signature has finished
+// erasing (see Intro's onVanish), so nothing else starts up while the intro
+// is writing and signing.
+const [appReady, setAppReady] = useState(false)
 const lenisRef = useRef(null)
 
 const pageBg = "linear-gradient(135deg, #1F1E24, #23241E)"
@@ -156,7 +173,7 @@ const pageBg = "linear-gradient(135deg, #1F1E24, #23241E)"
 // by FlipStack's FlipPage wrapper - now just a plain style object applied
 // to each section's own wrapper div).
 const sectionBgStyle = {
-  background: `url(/section-map-bg.svg) center/cover no-repeat, ${pageBg}`,
+  background: `url(/map/section-map-bg.svg) center/cover no-repeat, ${pageBg}`,
 }
 
 // WORKS
@@ -167,20 +184,7 @@ const typedExpertiseHeading = useTypingEffect("Expertise", 80, expertiseInView)
 
 
 
-useEffect(() => {
-  const updateClock = () => {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    const seconds = String(now.getSeconds()).padStart(2, "0");
-    setTime(`${hours}:${minutes}:${seconds}`);
-  };
 
-updateClock();
-  const interval = setInterval(updateClock, 1000);
-
-  return () => clearInterval(interval);
-}, []);
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -207,15 +211,13 @@ updateClock();
     finished, so this is the actual "everything has settled" signal -
     distinct from, and in addition to, the introDone refresh above.
   */
-  useEffect(() => {
-    const onLoad = () => ScrollTrigger.refresh()
-    if (document.readyState === "complete") {
-      ScrollTrigger.refresh()
-    } else {
-      window.addEventListener("load", onLoad)
-    }
-    return () => window.removeEventListener("load", onLoad)
-  }, [])
+useEffect(() => {
+  if (!introDone) return // the introDone effect already refreshes once the intro ends
+  if (document.readyState === "complete") return
+  const onLoad = () => ScrollTrigger.refresh()
+  window.addEventListener("load", onLoad)
+  return () => window.removeEventListener("load", onLoad)
+}, [introDone])
 
   /*
     SMOOTH SCROLL - Lenis
@@ -400,10 +402,21 @@ function useTypingEffect(text, speed = 50, active = true) {
 
 return (
 <>
-{!introDone && <Intro onDone={() => setIntroDone(true)} />}
-<Ripple />
-<WaterTrail />
+{!introDone && (
+  <Intro
+    onVanish={() => setAppReady(true)}
+    onDone={() => {
+      setAppReady(true)
+      setIntroDone(true)
+    }}
+  />
+)}
 <CustomCursor />
+
+{appReady && (
+<>
+{introDone && <Ripple />}
+{introDone && <WaterTrail />}
 
 <main className="min-h-screen voltaire-regular text-[#EDEDF2] relative" style={{ background: pageBg }}>
 <Header 
@@ -451,12 +464,20 @@ setIsOpen={setIsOpen}
         />
       ),
     },
+          {
+        id: "activity",
+        style: sectionBgStyle,
+        node: <ActivityCenter sectionFade={sectionFade} />,
+      },
+
   ]}
 />
 
-<Footer time={time} />
+<ClockedFooter />
 </main>
 
 <ScrollArrow scrollTarget={scrollTarget}/>
+</>
+)}
 </>
 );}

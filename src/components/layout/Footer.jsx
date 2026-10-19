@@ -1,0 +1,135 @@
+import React from "react";
+import { motion } from "framer-motion";
+import { Mail, Github, Linkedin } from "lucide-react";
+import { FaMedium } from "react-icons/fa";
+
+export default function Footer(props){
+    return(
+        <>
+        
+
+<footer id="footer" className="relative flex flex-col items-center justify-center overflow-hidden text-[#EDEDF2]">
+  {/* BACKGROUND IMAGE: the wrapper is only a box for the image to fill.
+      Its height comes from the content below (min 550px, 600px on large
+      screens), so on a short/narrow screen where the content is taller than
+      550px the box grows with it and the image still covers everything,
+      instead of the content spilling out past the end of the image. */}
+  <div className="relative w-full">
+    <img
+      src="/images/footer.jpg"
+      alt="Footer Background"
+      className="absolute inset-0 w-full h-full object-cover opacity-60"
+    />
+
+    {/* GIANT WORDMARK - low in the footer, behind everything. Bumped up
+        from a barely-visible /10 to /20 and moved out of the copyright
+        line into its own full-width layer so it actually reads as a big
+        background graphic instead of disappearing or squeezing the text
+        above it. */}
+    <div
+      aria-hidden="true"
+      className="pointer-events-none select-none absolute inset-x-0 bottom-0 z-0 text-[#EDEDF8]/20 bebas-neue-regular leading-none whitespace-nowrap text-center translate-y-[10%]"
+      style={{ fontSize: "clamp(3rem, 16vw, 13rem)" }}
+    >
+      AKPOYOVWIRE
+    </div>
+
+    {/* CONTENT with slide-up */}
+    <motion.div
+      className="relative z-10 flex flex-col items-center justify-center w-full min-h-[550px] lg:min-h-[600px] px-8 py-12"
+    >
+            {/* CLOCK FIRST */}
+      <div className="text-center text-4xl bebas-neue-regular mb-6">
+        {props.time}
+      </div>
+
+      {/* Vertical Nav */}
+      <div className="flex flex-col items-center mb-8">
+        {["Home", "About", "Expertise", "Works"].map((tab, idx) => (
+          <React.Fragment key={idx}>
+            <a
+              href={`#${tab.toLowerCase()}`}
+              className="py-2 px-4 hover:text-[#E4572E] transition"
+            >
+              {tab}
+            </a>
+            {idx < 3 && (
+              <div className="w-32 border-t border-[#EDEDF2] mx-auto"></div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* Floating Contact Icons */}
+      <motion.div
+        className="flex gap-6 mb-8"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.4 }}
+        variants={{
+          visible: {
+            transition: { staggerChildren: 0.2 },
+          },
+        }}
+      >
+        {[
+          {
+            icon: <Mail size={20} color="#D14836" />,
+            href: "mailto:ogbontheakpos@gmail.com",
+            slideFrom: "top",
+          },
+          {
+            icon: <Github size={20} color="#FFFFFF" />,
+            href: "https://github.com/akpoyovwire",
+            slideFrom: "bottom",
+          },
+          {
+            icon: <Linkedin size={20} color="#0A66C2" />,
+            href: "https://www.linkedin.com/in/akpoyovwire/",
+            slideFrom: "top",
+          },
+          {
+            icon: <FaMedium size={22} color="#000000" />,
+            href: "https://medium.com/@dahgrate",
+            slideFrom: "bottom",
+          },
+        ].map((link, idx) => (
+          <motion.a
+            key={idx}
+            href={link.href}
+            target="_blank"
+            className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#E4572E]"
+            initial={{ opacity: 0, y: link.slideFrom === "top" ? -50 : 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            viewport={{ once: false, amount: 0.4 }}
+            whileHover={{ scale: 1.1 }}
+          >
+            <motion.div
+              animate={{
+                y: [0, -5, 0],
+              }}
+              transition={{
+                duration: 2,
+                ease: "easeInOut",
+                repeat: Infinity,
+              }}
+            >
+              {link.icon}
+            </motion.div>
+          </motion.a>
+        ))}
+      </motion.div>
+
+      {/* COPYRIGHT + CLOCK */}
+      <div className="text-center text-sm ">
+        &copy; {new Date().getFullYear()} AkposWorld. All rights reserved.
+        <br />
+      </div>
+    </motion.div>
+  </div>
+</footer>
+
+</>
+    )
+}

@@ -1,0 +1,921 @@
+/* =====================================================================
+   ACTIVITY CENTER STYLESHEET
+   Everything for the Activity Center and its games lives in this one file:
+   cards, modals, shared game styles, then one section per game / tool.
+   Imported by ActivityCenter.jsx.
+   ===================================================================== */
+
+/* =====================================================================
+   ACTIVITY CENTER - layout and cards
+   (Works-style carousel; colors/fonts match the existing site)
+   ===================================================================== */
+.activity-center {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  padding: 2rem 0;
+}
+.activity-center-heading {
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  min-height: 2rem;
+  color: #f4f4f5;
+  text-align: center;
+  margin: 0 0 1.5rem;
+  padding: 0 1.5rem;
+}
+.activity-center-stage {
+  position: relative;
+}
+.activity-center-track {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+  overflow-x: auto;
+  justify-content: safe center;
+  scroll-behavior: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.activity-center-track::-webkit-scrollbar {
+  display: none;
+}
+.activity-center-card-wrap {
+  flex-shrink: 0;
+  width: 46vw;
+}
+@media (min-width: 640px) {
+  .activity-center-card-wrap {
+    width: 420px;
+  }
+}
+@media (max-width: 639px) {
+  .activity-center-card-wrap {
+    width: 72vw;
+  }
+  .activity-center-card {
+    height: 56vh;
+    height: 56dvh;
+  }
+  .activity-center-heading {
+    font-size: 1.25rem;
+  }
+}
+.activity-center-card-label {
+  margin: 0 0 0.5rem;
+  padding: 0 0.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #d4d4d8;
+}
+.activity-center-card {
+  position: relative;
+  height: 58vh;
+  max-height: 560px;
+  overflow: hidden;
+  background: #2c2f34;
+  cursor: pointer;
+}
+.activity-center-card:focus-visible {
+  outline: 2px solid #4fa3d1;
+}
+.activity-center-card-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  font-family: "Atma", system-ui;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #e4572e;
+}
+.activity-center-card-img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+.activity-center-card:hover .activity-center-card-img {
+  transform: scale(1.05);
+}
+.activity-center-card-top {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 0.75rem 2.5rem;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), transparent);
+  pointer-events: none;
+}
+.activity-center-card-logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0.375rem;
+  object-fit: contain;
+  user-select: none;
+}
+.activity-center-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+}
+.activity-center-arrow:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+.activity-center-arrow--prev {
+  left: 0.5rem;
+}
+.activity-center-arrow--next {
+  right: 0.5rem;
+}
+.activity-center-scrubber {
+  position: relative;
+  width: 18rem;
+  max-width: 85vw;
+  height: 0.75rem;
+  margin: 1rem auto 0;
+  border-radius: 9999px;
+  background: linear-gradient(to right, #4fa3d1, #e4572e);
+  touch-action: none;
+}
+.activity-center-scrubber--hidden {
+  visibility: hidden;
+}
+.activity-center-scrubber-knob {
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #1f1e24;
+  border: 1px solid #6d697e;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* =====================================================================
+   ACTIVITY CENTER - modals (shared by Play, Listening Room, Mon IA, games)
+   ===================================================================== */
+.activity-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  font-family: "Voltaire", sans-serif;
+  color: #ededf2;
+}
+.activity-modal--level-2 {
+  z-index: 110;
+}
+.activity-modal-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgba(23, 22, 27, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  outline: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.activity-modal-scroll::-webkit-scrollbar {
+  display: none;
+}
+.activity-modal--level-2 .activity-modal-scroll {
+  background: rgba(23, 22, 27, 0.96);
+}
+/* The inner column is at least one full screen tall (so a menu like Play fits
+   without scrolling); content taller than the screen (a long game) scrolls. */
+.activity-modal-inner {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 1.5rem;
+}
+@media (min-width: 768px) {
+  .activity-modal-inner {
+    padding-top: 5.5rem;
+  }
+}
+@media (max-width: 639px) {
+  .activity-modal-inner {
+    padding: 4.5rem 1rem max(1rem, env(safe-area-inset-bottom));
+  }
+}
+/* game modals: no big header, the game uses the WHOLE screen */
+.activity-modal-inner--game {
+  max-width: none;
+  height: 100%;
+  padding: 1.25rem clamp(1rem, 4vw, 4.5rem) max(1.25rem, env(safe-area-inset-bottom));
+}
+.activity-modal-inner--bare .activity-modal-body {
+  margin-top: 0;
+}
+.activity-modal-title {
+  flex-shrink: 0;
+  margin: 0;
+  padding-bottom: 0.25rem;
+  overflow: hidden;
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: min(9rem, 13vh, 11vw);
+  line-height: 0.95;
+  color: #f4f4f5;
+}
+.activity-modal-rule {
+  flex-shrink: 0;
+  height: 1px;
+  margin-top: 0.75rem;
+  background: rgba(255, 255, 255, 0.15);
+}
+.activity-modal-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 1.25rem;
+}
+.activity-modal-intro {
+  max-width: 28rem;
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}
+.activity-modal-close {
+  position: fixed;
+  top: 1.25rem;
+  z-index: 10;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #f4f4f5;
+}
+.activity-modal-close--right {
+  right: 1.25rem;
+}
+.activity-modal-close--left {
+  left: 1.25rem;
+}
+@media (min-width: 768px) {
+  .activity-modal-close {
+    top: 2rem;
+  }
+  .activity-modal-close--right {
+    right: 2.5rem;
+  }
+  .activity-modal-close--left {
+    left: 2.5rem;
+  }
+}
+.activity-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.activity-modal-close:focus-visible {
+  outline: 2px solid #4fa3d1;
+}
+
+/* Play modal: the four game cards */
+.activity-game-grid {
+  display: grid;
+  flex: 1;
+  min-height: 12rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+@media (max-width: 767px) {
+  .activity-game-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    min-height: 24rem;
+  }
+}
+.activity-game-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: #2c2f34;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.activity-game-card:focus-visible {
+  outline: 2px solid #4fa3d1;
+}
+.activity-game-card-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  font-family: "Atma", system-ui;
+  font-weight: 600;
+  color: #e4572e;
+}
+.activity-game-card-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+.activity-game-card:hover .activity-game-card-img {
+  transform: scale(1.05);
+}
+.activity-game-card-top {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.5rem 0.5rem 2rem;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), transparent);
+  pointer-events: none;
+}
+.activity-game-card-logo {
+  margin-left: auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0.25rem;
+  object-fit: contain;
+  user-select: none;
+}
+.activity-game-card-name {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 2;
+  padding: 2.5rem 0.75rem 0.75rem;
+  font-family: "Bebas Neue", sans-serif;
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #f4f4f5;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+}
+
+/* =====================================================================
+   SHARED GAME STYLES  (used by every game)
+   ===================================================================== */
+/* tool logos (top-left of a game card) */
+.activity-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.25rem;
+}
+.activity-tool {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.875rem;
+}
+.activity-tool svg {
+  display: block;
+}
+/* the JavaScript logo is a square: crop it into a circle that sits inside the
+   grey round badge (the badge itself stays) */
+.activity-tool-round {
+  display: block;
+  width: 1.0625rem;
+  height: 1.0625rem;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.activity-tool-round svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* game screen: the game is centered on the whole screen; its name floats on
+   the right (above the game on phones). No divider line. */
+.activity-game-layout {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.activity-game-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  max-width: 40rem;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 auto;
+}
+.activity-game-side {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.activity-game-title {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  text-align: right;
+  text-transform: uppercase;
+  line-height: 0.92;
+  font-size: min(6rem, 11vh, 6vw);
+  color: #f4f4f5;
+  overflow: hidden; /* words rise in from below, like the Play title */
+  padding-bottom: 0.08em;
+}
+.activity-game-title-word {
+  display: block;
+}
+/* intro line on the left of a game (e.g. "Play rock paper scissors against me.").
+   Same font as the You / Akpos / Draws labels. */
+.activity-game-tagline {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: min(15rem, calc(50% - 21rem));
+  margin: 0;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  line-height: 1.7;
+  text-transform: uppercase;
+  color: #e4e4e7;
+  pointer-events: none;
+}
+.activity-game-tagline-line {
+  display: block;
+}
+.activity-game-tagline-line + .activity-game-tagline-line {
+  margin-top: 0.75rem;
+  color: #a1a1aa;
+}
+/* tablets: not enough room beside the game, so it sits at the top, centered */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .activity-game-tagline {
+    top: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    transform: none;
+    font-size: 0.8125rem;
+    text-align: center;
+  }
+  .activity-game-tagline-line {
+    display: inline;
+  }
+  .activity-game-tagline-line + .activity-game-tagline-line {
+    margin: 0 0 0 0.5em;
+  }
+}
+@media (max-width: 899px) {
+  .activity-game-layout {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .activity-game-main {
+    max-width: none;
+  }
+  .activity-game-side {
+    position: static;
+    order: -1;
+    align-self: flex-end;
+    min-height: 2.75rem;
+    padding-left: 3.25rem; /* room for the close button on the left */
+    transform: none;
+  }
+  .activity-game-title {
+    font-size: clamp(1.5rem, 7.5vw, 2.25rem);
+    line-height: 1;
+  }
+  .activity-game-title-word {
+    display: inline;
+  }
+  .activity-game-tagline {
+    position: static;
+    order: -1;
+    align-self: center;
+    width: auto;
+    max-width: 24rem;
+    transform: none;
+    font-size: clamp(0.6875rem, 3.2vw, 0.8125rem);
+    text-align: center;
+    margin-top: 1.25rem;
+  }
+  .activity-game-tagline-line {
+    display: inline;
+  }
+  .activity-game-tagline-line + .activity-game-tagline-line {
+    margin: 0 0 0 0.5em;
+  }
+}
+
+.activity-game-btn {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.5rem;
+  touch-action: manipulation;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f4f4f5;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  transition: background 0.2s, opacity 0.2s;
+}
+.activity-game-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+.activity-game-btn:disabled {
+  opacity: 0.35;
+}
+.activity-game-btn:focus-visible {
+  outline: 2px solid #4fa3d1;
+  outline-offset: 2px;
+}
+.activity-game-btn--primary {
+  background: #e4572e;
+  border-color: #e4572e;
+}
+.activity-game-btn--primary:hover:not(:disabled) {
+  background: #cf4a24;
+}
+
+/* =====================================================================
+   ROCK PAPER SCISSORS  (.rps-*)
+   Hands use your own design: brown by default, blue = You, orange = Computer
+   ===================================================================== */
+.rps {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* the whole game sits in the middle of the screen */
+  gap: 0.75rem;
+  min-height: 0;
+}
+.rps-score {
+  display: flex;
+  justify-content: center;
+  gap: clamp(1rem, 4vw, 2.5rem);
+  margin: 0;
+}
+.rps-score-item {
+  min-width: 4.5rem;
+  text-align: center;
+}
+.rps-score-item dt {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}
+.rps-score-item dd {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: #f4f4f5;
+}
+.rps-score-item--you dd {
+  color: #4fa3d1;
+}
+.rps-score-item--cpu dd {
+  color: #e4572e;
+}
+.rps-arena {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 5vw, 4rem);
+  width: 100%;
+}
+.rps-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.rps-side--you {
+  --hand-fill: #4fa3d1;
+  --hand-stroke: #1b4d68;
+}
+.rps-side--cpu {
+  --hand-fill: #e4572e;
+  --hand-stroke: #6e2310;
+}
+.rps-hand-wrap {
+  width: min(clamp(6rem, 32vh, 16rem), 34vw);
+  aspect-ratio: 1;
+}
+.rps-hand-wrap--ghost {
+  opacity: 0.18;
+}
+.rps-hand-wrap--winner {
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.35));
+}
+.rps-hand-wrap--shake {
+  animation: rps-shake 0.4s ease-in-out 2;
+}
+@keyframes rps-shake {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  25% { transform: translateY(-14%) rotate(-6deg); }
+  50% { transform: translateY(6%) rotate(0); }
+  75% { transform: translateY(-14%) rotate(6deg); }
+}
+/* the computer's hand is mirrored so the two hands face each other */
+.rps-hand-wrap--flip .rps-hand {
+  transform: scaleX(-1);
+}
+.rps-hand {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.rps-hand-shape {
+  fill: var(--hand-fill, #8d5524);
+  stroke: var(--hand-stroke, #4a2c17);
+  stroke-width: 0.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.rps-hand-fill {
+  fill: var(--hand-fill, #8d5524);
+  stroke: none;
+}
+.rps-hand-edge {
+  fill: none;
+  stroke: var(--hand-stroke, #4a2c17);
+  stroke-width: 0.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.rps-hand-line {
+  fill: none;
+  stroke: var(--hand-stroke, #4a2c17);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+}
+.rps-side-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}
+.rps-versus {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.5rem;
+  color: #6d697e;
+}
+.rps-status {
+  min-height: 3.25rem;
+  text-align: center;
+}
+.rps-status-main {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 2rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: #f4f4f5;
+}
+.rps-status-main--win {
+  color: #4fa3d1;
+}
+.rps-status-main--loss {
+  color: #e4572e;
+}
+.rps-status-sub {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}
+.rps-choices {
+  display: flex;
+  justify-content: center;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  width: 100%;
+}
+.rps-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: clamp(5.25rem, 14vh, 8rem);
+  padding: 0.5rem;
+  color: #ededf2;
+  background: #2c2f34;
+  border: 2px solid transparent;
+  border-radius: 0.75rem;
+  touch-action: manipulation;
+  transition: transform 0.2s, border-color 0.2s, opacity 0.2s;
+}
+.rps-choice .rps-hand {
+  height: auto;
+  aspect-ratio: 1;
+}
+.rps-choice:hover:not([aria-disabled="true"]) {
+  border-color: #4fa3d1;
+  transform: translateY(-3px);
+}
+.rps-choice:focus-visible {
+  outline: 2px solid #4fa3d1;
+  outline-offset: 2px;
+}
+.rps-choice[aria-disabled="true"] {
+  opacity: 0.55;
+}
+.rps-choice--picked[aria-disabled="true"] {
+  opacity: 1;
+  border-color: #4fa3d1;
+}
+.rps-choice-name {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ededf2;
+}
+.rps-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+.rps-hint {
+  display: none;
+  margin: 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6d697e;
+}
+@media (pointer: fine) {
+  .rps-hint {
+    display: block;
+  }
+}
+@media (max-width: 639px) {
+  .rps-score-item dd {
+    font-size: 2rem;
+  }
+  .rps-status-main {
+    font-size: 1.625rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rps-hand-wrap--shake { animation: none; }
+  .rps-choice { transition: none; }
+}
+
+/* =====================================================================
+   TIC-TAC-TOE          (.ttt-*)           - see below
+   WORDON               (.wordon-*)        - added in its own step
+   QUIZ (.quiz-*)        - added in its own step
+   LISTENING ROOM       (.listening-room-*) - added in its own step
+   MON IA               (.mon-ia-*)        - added in its own step
+   ===================================================================== */
+
+/* =====================================================================
+   TIC-TAC-TOE  (.ttt-*)
+   Reuses .rps-score*, .rps-status*, .rps-actions and .activity-game-btn.
+   You are X (blue), Akpos is O (orange), same colours as Rock Paper Scissors.
+   ===================================================================== */
+.ttt {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* the whole game sits in the middle of the screen */
+  gap: 0.75rem;
+  min-height: 0;
+}
+.ttt-modes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+.ttt-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  width: min(clamp(14rem, 42vh, 24rem), 86vw);
+  aspect-ratio: 1;
+  transition: opacity 0.3s;
+}
+.ttt-board--ghost {
+  opacity: 0.3;
+  pointer-events: none; /* pick a mode first */
+}
+.ttt-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: #2c2f34;
+  border: 2px solid transparent;
+  border-radius: 0.75rem;
+  touch-action: manipulation;
+  transition: transform 0.2s, border-color 0.2s, opacity 0.25s, background 0.25s, box-shadow 0.25s;
+}
+.ttt-cell:hover:not([aria-disabled="true"]) {
+  border-color: #4fa3d1;
+  transform: translateY(-2px);
+}
+.ttt-cell:focus-visible {
+  outline: 2px solid #4fa3d1;
+  outline-offset: 2px;
+}
+.ttt-cell--win {
+  background: #353a41;
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.18);
+}
+.ttt-cell--dim {
+  opacity: 0.45;
+}
+.ttt-mark {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* each stroke is drawn in (pathLength="1" in the markup makes "1" the full length) */
+.ttt-mark path,
+.ttt-mark circle {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ttt-draw 0.3s ease-out forwards;
+}
+.ttt-mark--x path {
+  stroke: #4fa3d1;
+}
+.ttt-mark--x path + path {
+  animation-delay: 0.12s;
+}
+.ttt-mark--o circle {
+  stroke: #e4572e;
+  transform: rotate(-90deg); /* start drawing from the top */
+  transform-origin: 50% 50%;
+}
+@keyframes ttt-draw {
+  to { stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ttt-mark path,
+  .ttt-mark circle { animation: none; stroke-dashoffset: 0; }
+  .ttt-cell { transition: none; }
+}
