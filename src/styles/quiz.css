@@ -32,8 +32,11 @@
   color: #ffffff;
 }
 /* arrow drawn with CSS: a shaft (::before) and a "<" head (::after).
-   Its width grows on hover and a matching negative margin keeps the word still,
-   so the arrow looks like it stretches out to the LEFT. */
+   On hover the arrow stretches BOTH ways: its head moves left (negative margin) while its
+   tail pushes the word "Modes" to the right, and the word shrinks a little as it goes. */
+.quiz-back-label {
+  transition: font-size 0.25s ease;
+}
 .quiz-back-arrow {
   position: relative;
   display: inline-block;
@@ -66,12 +69,12 @@
 }
 .quiz-back:hover .quiz-back-arrow,
 .quiz-back:focus-visible .quiz-back-arrow {
-  width: 1.9rem;
-  margin-left: -0.9rem;
+  width: 2.4rem; /* 1.4rem longer in total ... */
+  margin-left: -0.7rem; /* ... 0.7rem of it grows to the left, the other 0.7rem pushes the word right */
 }
-.quiz-back:focus-visible {
-  outline: 2px solid #4fa3d1;
-  outline-offset: 2px;
+.quiz-back:hover .quiz-back-label,
+.quiz-back:focus-visible .quiz-back-label {
+  font-size: 1rem;
 }
 
 /* the three mode cards */
@@ -519,6 +522,7 @@
   .quiz-mode,
   .quiz-mode-img,
   .quiz-back-arrow,
+  .quiz-back-label,
   .quiz-topic,
   .quiz-option,
   .quiz-progress::after { transition: none; }

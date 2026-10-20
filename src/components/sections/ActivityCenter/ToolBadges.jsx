@@ -1,6 +1,6 @@
 import React from "react";
 // react-icons/si is already used by Works.jsx, so this adds no new weight.
-import { SiJavascript, SiReact, SiNodedotjs, SiPython, SiSupabase, SiVercel } from "react-icons/si";
+import { SiJavascript, SiReact, SiNodedotjs, SiPython, SiSupabase, SiVercel, SiGooglegemini } from "react-icons/si";
 // lucide-react is already a dependency of the site (used for the plain "DB" and "API" badges)
 import { Database, Plug } from "lucide-react";
 
@@ -14,7 +14,7 @@ const TOOLS = {
   vercel: { label: "Vercel", Icon: SiVercel },
   db: { label: "Open Trivia DB (question database)", Icon: Database, iconProps: { size: "1em" } },
   api: { label: "API (live data)", Icon: Plug, iconProps: { size: "1em" } },
-  // gemini: add once the AI quiz really works (check your react-icons version has SiGooglegemini first)
+    gemini: { label: "Gemini (AI quiz)", Icon: SiGooglegemini },
 };
 
 // Small row of tool logos (top-left of a card). Pass ids from the TOOLS list above.

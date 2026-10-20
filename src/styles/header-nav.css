@@ -1,0 +1,225 @@
+/* Header navigation: hero bar, side stack, mobile menu.
+   Save as src/styles/header-nav.css (imported by Header.jsx).
+   Colours: orange #E4572E, blue #4A78A3 (a shade darker than the #5B8DB8 in section-map-bg.svg),
+   black #1F1E24 (page background). */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap');
+
+.nav-bar,
+.nav-vlist,
+.nav-drop,
+.nav-burger,
+.nav-mobile-panel {
+  font-family: 'Space Grotesk', 'Helvetica Neue', Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* ---------- hero bar: separate boxes, fully transparent ---------- */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-bar-item {
+  position: relative;
+}
+
+.nav-bar-link {
+  display: block;
+  padding: 0.6rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1;
+  color: #EDEDF2;
+  text-decoration: none;
+  background-color: rgba(31, 30, 36, 0);
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  .nav-bar-link { padding: 0.7rem 0.9rem; font-size: 0.82rem; }
+}
+
+@media (min-width: 1280px) {
+  .nav-bar-link { padding: 0.8rem 1.1rem; font-size: 0.95rem; }
+}
+
+/* ---------- slot-machine label ---------- */
+.nav-slot {
+  position: relative;
+  display: block;
+  height: 1.4em;
+  line-height: 1.4em;
+  overflow: hidden;
+  text-align: center;
+}
+
+.nav-slot-sizer {
+  display: block;
+  height: 1.4em;
+  visibility: hidden;
+  white-space: nowrap;
+}
+
+.nav-slot-reel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-slot-word {
+  display: block;
+  height: 1.4em;
+  white-space: nowrap;
+}
+
+/* ---------- drop panel ---------- */
+.nav-drop {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 5;
+  width: 17rem;
+  padding: 0.85rem 1rem 1rem;
+  background: #1F1E24;
+  border: 1px solid rgba(237, 237, 242, 0.16);
+  color: #EDEDF2;
+  pointer-events: none;
+  text-align: left;
+}
+
+.nav-drop-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.65rem;
+  margin-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(237, 237, 242, 0.14);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: rgba(237, 237, 242, 0.6);
+}
+
+.nav-dots {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.nav-dots i {
+  display: block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(237, 237, 242, 0.45);
+}
+
+.nav-drop-text {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.nav-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: #E4572E;
+  animation: nav-caret-blink 0.8s steps(1) infinite;
+}
+
+@keyframes nav-caret-blink {
+  50% { opacity: 0; }
+}
+
+/* ---------- vertical stack (side nav + mobile list) ---------- */
+.nav-vlist {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: right;
+}
+
+.nav-vlist > li {
+  padding-right: 1.9rem; /* room for the arrow */
+}
+
+.nav-vlink {
+  display: inline-block;
+  padding: 0.42rem 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1;
+  color: #EDEDF2;
+  text-decoration: none;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
+.nav-vlink.is-dim {
+  filter: blur(4px);
+  opacity: 0.35;
+}
+
+.nav-vlist--lg .nav-vlink {
+  font-size: 1.15rem;
+  padding: 0.6rem 0;
+}
+
+.nav-arrow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  line-height: 0;
+  color: #E4572E;
+  pointer-events: none;
+}
+
+/* ---------- mobile ---------- */
+.nav-burger {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+.nav-burger span {
+  display: block;
+  width: 26px;
+  height: 2px;
+  background: #EDEDF2;
+}
+
+.nav-mobile-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  padding: 1rem 1.25rem;
+  background: #1F1E24;
+  border: 1px solid rgba(237, 237, 242, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-caret { animation: none; }
+}

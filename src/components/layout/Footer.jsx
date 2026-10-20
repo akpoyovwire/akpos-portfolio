@@ -75,7 +75,7 @@ export default function Footer(props){
         {[
           {
             icon: <Mail size={20} color="#D14836" />,
-            href: "mailto:ogbontheakpos@gmail.com",
+            href: "mailto:ogbonakposfficial@gmail.com",
             slideFrom: "top",
           },
           {

@@ -19,5 +19,5 @@ export const GAMES = [
   { id: "tictactoe", name: "Tic-Tac-Toe", image: "/images/tictac.jpg", tools: ["javascript", "nodejs"], tagline: "Let's play X and O. Should I go easy or lock in?" },
   { id: "rps", name: "Rock Paper Scissors", image: "/images/rps.jpg", tools: ["javascript", "nodejs"], tagline: "Play rock paper scissors against me. Think you can win?" },
   { id: "wordon", name: "Wordon", image: "/images/wordon.jpg", tools: ["javascript", "nodejs", "python"], tagline: "Guess my secret four-letter word. You get six tries." },
-  { id: "quiz", name: "Quiz", image: "/images/quiz.jpg", tools: ["javascript", "nodejs", "python", "db", "api"], tagline: "Ten questions. How many can you get right?" },
+  { id: "quiz", name: "Quiz", image: "/images/quiz.jpg", tools: ["javascript", "nodejs", "python", "db", "api", "gemini"], tagline: "Ten questions. How many can you get right?" },
 ];

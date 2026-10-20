@@ -272,7 +272,7 @@ className="text-lg relative text-[#EDEDF2] mb-12 bebas-neue-regular -mt-5"
     {[
       {
         icon: <Mail size={20} color="#D14836" />,
-        href: "mailto:ogbontheakpos@gmail.com",
+        href: "mailto:ogbonakposfficial@gmail.com",
         slideFrom: "top",
       },
       {

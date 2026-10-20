@@ -140,7 +140,7 @@ export default function Quiz() {
       {stage !== "choose" && (
         <button type="button" className="quiz-back" onClick={goModes}>
           <span className="quiz-back-arrow" aria-hidden="true" />
-          <span>Modes</span>
+          <span className="quiz-back-label">Modes</span>
         </button>
       )}
 
