@@ -5,14 +5,15 @@ C:.
 |   .env.local
 |   .gitignore
 |   akposworldss.png
-|   architecture.txt
 |   index.html
 |   LICENSE
 |   package-lock.json
 |   package.json
 |   postcss.config.js
 |   README.md
+|   structure.txt
 |   tailwind.config.js
+|   vercel.json
 |   vite.config.mjs
 |   
 +---.vercel
@@ -29,20 +30,28 @@ C:.
 |               83d1f44f-8cec-4f1f-9922-e67a75460dcc.json
 |               9edc8205-465e-4bbf-a253-cd3f949f5c3c.json
 |               e6493404-11da-404b-bf85-ca5a078e6def.json
+|               ee6e165f-9720-4fbf-ba7d-7253c98fb6b3.json
 |               
 +---api
-|       mon-ia.js
-|       
+|   |   mon-ia.js
+|   |   
+|   \---cron
+|           mon-ia-digest.js
+|           
 +---dist
 |   |   index.html
 |   |   
 |   +---assets
-|   |       index-73480eb8.js
-|   |       index-f7a08bd4.css
+|   |       index-76d4c690.js
+|   |       index-7a59461d.css
+|   |       wordonGuesses-12583253.js
+|   |       wordonSolutions-33022555.js
 |   |       
 |   +---icons
 |   |       hand-open.svg
 |   |       hand-pointer.svg
+|   |       hand-rock.svg
+|   |       hand-scissors.svg
 |   |       hand.svg
 |   |       
 |   +---images
@@ -9556,6 +9565,8 @@ C:.
 |   |       +---id3v2
 |   |       |       AbstractID3Parser.d.ts
 |   |       |       AbstractID3Parser.js
+|   |       |       EmbeddedID3v2.d.ts
+|   |       |       EmbeddedID3v2.js
 |   |       |       FrameHeader.d.ts
 |   |       |       FrameHeader.js
 |   |       |       FrameParser.d.ts
@@ -10803,10 +10814,16 @@ C:.
 |   |       |   FileTokenizer.js
 |   |       |   index.d.ts
 |   |       |   index.js
+|   |       |   isRandomAccessTokenizer.d.ts
+|   |       |   isRandomAccessTokenizer.js
 |   |       |   NotRegularFileError.d.ts
 |   |       |   NotRegularFileError.js
 |   |       |   ReadStreamTokenizer.d.ts
 |   |       |   ReadStreamTokenizer.js
+|   |       |   TokenizerBoundaryError.d.ts
+|   |       |   TokenizerBoundaryError.js
+|   |       |   TokenizerView.d.ts
+|   |       |   TokenizerView.js
 |   |       |   types.d.ts
 |   |       |   types.js
 |   |       |   
@@ -11900,32 +11917,41 @@ C:.
 |                   stringifyString.js
 |                   
 +---public
+|   +---audio
+|   |       2026-10-3-coping-mechanism.mp3
+|   |       COPING MECHANISM.mp3
+|   |       
 |   +---icons
 |   |       hand-open.svg
 |   |       hand-pointer.svg
+|   |       hand-rock.svg
+|   |       hand-scissors.svg
 |   |       hand.svg
 |   |       
 |   +---images
-|   |       ai.jpg
-|   |       aiexp.jpg
-|   |       devexp.jpg
-|   |       duetdays.jpg
-|   |       footer.jpg
-|   |       howithink.jpg
-|   |       listen.jpg
-|   |       play.jpg
-|   |       profile.jpg
-|   |       quiz.jpg
-|   |       resexp.jpg
-|   |       rhetexp.jpg
-|   |       rps.jpg
-|   |       secexp.jpg
-|   |       tictac.jpg
-|   |       whatibuild.jpg
-|   |       whatido.jpg
-|   |       whoami.jpg
-|   |       wordon.jpg
-|   |       
+|   |   |   ai.jpg
+|   |   |   aiexp.jpg
+|   |   |   devexp.jpg
+|   |   |   duetdays.jpg
+|   |   |   footer.jpg
+|   |   |   howithink.jpg
+|   |   |   listen.jpg
+|   |   |   play.jpg
+|   |   |   profile.jpg
+|   |   |   quiz.jpg
+|   |   |   resexp.jpg
+|   |   |   rhetexp.jpg
+|   |   |   rps.jpg
+|   |   |   secexp.jpg
+|   |   |   tictac.jpg
+|   |   |   whatibuild.jpg
+|   |   |   whatido.jpg
+|   |   |   whoami.jpg
+|   |   |   wordon.jpg
+|   |   |   
+|   |   \---listening
+|   |           2026-10-3-coping-mechanism-art.jpg
+|   |           
 |   +---logos
 |   |       app-placeholder.png
 |   |       duetdays-logo.png
@@ -11938,13 +11964,43 @@ C:.
 |   \---videos
 |           herovid2.mp4
 |           
++---scripts
+|   |   add-track.mjs
+|   |   build_mon_ia_knowledge.py
+|   |   build_quiz.py
+|   |   build_wordon_lists.py
+|   |   validate-tracks.mjs
+|   |   
+|   +---data
+|   |       enable1.txt
+|   |       mon_ia_knowledge_source.txt
+|   |       quiz_questions_source.txt
+|   |       wordon_blocklist.txt
+|   |       wordon_order.txt
+|   |       wordon_solutions_source.txt
+|   |       
+|   +---lib
+|   |       tracks.mjs
+|   |       tracks.test.mjs
+|   |       
+|   \---sql
+|           mon_ia_messages.sql
+|           
++---server
+|       endpoints.test.js
+|       monIaDigest.js
+|       monIaEmail.js
+|       monIaKnowledge.js
+|       monIaKnowledge.test.js
+|       monIaLogic.js
+|       monIaLogic.test.js
+|       monIaServices.test.js
+|       monIaStore.js
+|       
 \---src
     |   App.jsx
-    |   counter.js
     |   javascript.svg
-    |   main.js
     |   main.jsx
-    |   style.css
     |   
     +---components
     |   +---effects
@@ -11980,17 +12036,59 @@ C:.
     |           |   useCarousel.js
     |           |   
     |           +---games
-    |           |       HandIcon.jsx
-    |           |       registry.js
-    |           |       RockPaperScissors.jsx
-    |           |       rpsLogic.js
-    |           |       rpsLogic.test.js
-    |           |       
+    |           |   |   HandIcon.jsx
+    |           |   |   Quiz.jsx
+    |           |   |   quizApi.js
+    |           |   |   quizApi.test.js
+    |           |   |   quizData.test.js
+    |           |   |   quizLogic.js
+    |           |   |   quizLogic.test.js
+    |           |   |   QuizPlay.jsx
+    |           |   |   registry.js
+    |           |   |   RockPaperScissors.jsx
+    |           |   |   rpsLogic.js
+    |           |   |   rpsLogic.test.js
+    |           |   |   TicTacToe.jsx
+    |           |   |   tictactoeLogic.js
+    |           |   |   tictactoeLogic.test.js
+    |           |   |   Wordon.jsx
+    |           |   |   wordonData.test.js
+    |           |   |   wordonLogic.js
+    |           |   |   wordonLogic.test.js
+    |           |   |   
+    |           |   +---quiz
+    |           |   |       quizQuestions.js
+    |           |   |       
+    |           |   \---wordon
+    |           |           wordonAllowed.js
+    |           |           wordonGuesses.js
+    |           |           wordonSolutions.js
+    |           |           
     |           +---ListeningRoom
+    |           |       listeningRoomLogic.js
+    |           |       listeningRoomLogic.test.js
+    |           |       ListeningRoomModal.jsx
+    |           |       SnippetPlayer.jsx
+    |           |       
     |           \---MyAI
+    |                   MonIAChat.jsx
+    |                   monIaClient.js
+    |                   monIaClient.test.js
+    |                   MonIAModal.jsx
+    |                   privacyPolicy.js
+    |                   PrivacyPolicy.jsx
+    |                   RichText.jsx
+    |                   
+    +---data
+    |       listeningRoom.json
+    |       
     \---styles
             activity-center.css
             effects.css
             fonts.css
+            header-nav.css
             index.css
+            mon-ia.css
+            quiz.css
+            wordon.css
             

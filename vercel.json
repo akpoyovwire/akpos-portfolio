@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/cron/mon-ia-digest", "schedule": "0 7 * * 1" }
+  ]
+}

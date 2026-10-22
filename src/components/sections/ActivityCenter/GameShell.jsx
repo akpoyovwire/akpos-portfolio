@@ -1,5 +1,6 @@
-import React, { useLayoutEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import InfoDialog from "./InfoDialog";
 
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -7,7 +8,9 @@ const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: r
 // the RIGHT and animates in like the "Play" title, and an optional intro line
 // (the game's `tagline`) fades in on the LEFT. On phones both go above the game.
 // A tagline can have two sentences; each one sits on its own line.
-export default function GameShell({ title, tagline, children }) {
+// Optional `info` (see InfoDialog.jsx) adds an "i" button right after the title that opens an About panel.
+export default function GameShell({ title, tagline, info, mainClassName = "", children }) {
+  const [infoOpen, setInfoOpen] = useState(false);
   const titleRef = useRef(null);
   const taglineRef = useRef(null);
 
@@ -44,6 +47,14 @@ export default function GameShell({ title, tagline, children }) {
             </span>
           ))}
         </h2>
+        {info && (
+          <button type="button" className="activity-info-btn" onClick={() => setInfoOpen(true)} aria-label={`About ${title}`} title={`About ${title}`} aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11v5M12 8h.01" />
+            </svg>
+          </button>
+        )}
       </aside>
 
       {tagline && (
@@ -56,7 +67,8 @@ export default function GameShell({ title, tagline, children }) {
         </p>
       )}
 
-      <div className="activity-game-main">{children}</div>
+      <div className={`activity-game-main ${mainClassName}`.trim()}>{children}</div>
+      {info && <InfoDialog open={infoOpen} info={info} onClose={() => setInfoOpen(false)} />}
     </div>
   );
 }

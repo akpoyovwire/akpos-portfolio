@@ -13,15 +13,15 @@ const BLACK = "#1F1E24"
 const SPIN = 1.1 // seconds: colour change and the label spin run together
 
 const NAV = [
-  { id: "about", en: "About", fr: "À propos", ur: "Fa",
+  { id: "about", en: "About", fr: "A-propos", ur: "Kpahen ",
     blurb: "Get to know who I am, what I do, and how I do it." },
-  { id: "expertise", en: "Expertise", fr: "Compétences", ur: "Ori",
+  { id: "expertise", en: "Expertise", fr: "Competences", ur: "Orianrien",
     blurb: "See the areas I specialise in and the skills behind the work." },
-  { id: "works", en: "Works", fr: "Réalisations", ur: "Owia",
+  { id: "works", en: "Works", fr: "Realisations", ur: "Owia",
     blurb: "Browse the projects I've built and open any to see how it came together." },
-  { id: "activity", en: "Activity", fr: "Activités", ur: "Iruo",
+  { id: "activity", en: "Activity", fr: "Activites", ur: "Iruo",
     blurb: "Step into my Activity Center: play games, listen in, and chat with my AI." },
-  { id: "footer", en: "Goodbye", fr: "Au revoir", ur: "Tode",
+  { id: "footer", en: "Goodbye", fr: "Au-revoir", ur: "Tode",
     blurb: "Say goodbye, find where to reach me, and get in touch." },
 ]
 

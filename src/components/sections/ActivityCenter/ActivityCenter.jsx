@@ -5,6 +5,8 @@ import PlayModal from "./PlayModal";
 import useCarousel from "./useCarousel";
 import { ACTIVITIES, ACTIVITY_LOGO } from "./activityData";
 import "../../../styles/activity-center.css"; // all Activity Center + game styles live here
+import ListeningRoomModal from "./ListeningRoom/ListeningRoomModal";
+import MonIAModal from "./MyAI/MonIAModal";
 
 // Listening Room and Mon IA get their real interfaces in later steps.
 function ComingSoonModal({ activity, onClose }) {
@@ -16,7 +18,7 @@ function ComingSoonModal({ activity, onClose }) {
 }
 
 // Add a modal here as each activity is built.
-const MODALS = { play: PlayModal };
+const MODALS = { play: PlayModal, "listening-room": ListeningRoomModal, "mon-ia": MonIAModal };
 
 function useTyping(text, active, speed = 80) {
   const [shown, setShown] = useState("");

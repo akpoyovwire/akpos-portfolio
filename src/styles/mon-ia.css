@@ -1,0 +1,464 @@
+/* =====================================================================
+   MON IA  (.mon-ia-*)   the "Ask Away" glass chat card and the Privacy Policy screen.
+   Sits inside the game-style screen (name on the right, see GameShell). No visible scrollbar;
+   the card always fits the screen. Loaded by MonIAChat.jsx.
+   ===================================================================== */
+
+/* the card is centred in the game column; two soft colour glows sit behind it so the glass has something to blur */
+.activity-game-main:has(> .mon-ia-stage) {
+  justify-content: center;
+}
+.mon-ia-stage {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 1 1 0;
+  align-self: center;
+  width: 100%;
+  min-height: 0;
+  max-width: 26rem;
+  max-height: 30rem;
+}
+.mon-ia-stage::before,
+.mon-ia-stage::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 9999px;
+  filter: blur(52px);
+  pointer-events: none;
+  animation: mon-ia-drift 14s ease-in-out infinite alternate;
+}
+.mon-ia-stage::before {
+  top: -2.5rem;
+  left: -3rem;
+  width: 15rem;
+  height: 15rem;
+  background: #4fa3d1;
+  opacity: 0.5;
+}
+.mon-ia-stage::after {
+  right: -2.5rem;
+  bottom: -2rem;
+  width: 13rem;
+  height: 13rem;
+  background: #e4572e;
+  opacity: 0.42;
+  animation-delay: -6s;
+}
+@keyframes mon-ia-drift {
+  to { transform: translate(1.5rem, -1rem) scale(1.1); }
+}
+
+.mon-ia {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.85rem 1rem 0.8rem;
+  font-family: "Voltaire", sans-serif;
+  color: #f4f4f5;
+  background:
+    linear-gradient(145deg, rgba(79, 163, 209, 0.16), rgba(255, 255, 255, 0.04) 45%, rgba(228, 87, 46, 0.12));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1.5rem;
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* header */
+.mon-ia-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+.mon-ia-logo {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: contain;
+}
+.mon-ia-heading {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f4f4f5;
+}
+.mon-ia-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d4d4d8;
+}
+.mon-ia-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  background: #3ddc84;
+  border-radius: 9999px;
+  box-shadow: 0 0 0.6rem #3ddc84;
+  animation: mon-ia-pulse 2.4s ease-in-out infinite;
+}
+@keyframes mon-ia-pulse {
+  50% { opacity: 0.45; }
+}
+.mon-ia-iconbtn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 0.6rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e4e4e7;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  touch-action: manipulation;
+  transition: background 0.2s;
+}
+.mon-ia-iconbtn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+.mon-ia-iconbtn:focus-visible,
+.mon-ia-chip:focus-visible,
+.mon-ia-link:focus-visible,
+.mon-ia-send:focus-visible {
+  outline: 2px solid #4fa3d1;
+  outline-offset: 2px;
+}
+
+/* conversation: scrolls, but shows no scrollbar; the edges fade instead */
+.mon-ia-log {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-height: 0;
+  padding: 0.5rem 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.mon-ia-log::-webkit-scrollbar {
+  display: none;
+}
+.mon-ia-log:focus-visible {
+  outline: 2px solid #4fa3d1;
+  outline-offset: 2px;
+}
+/* messages: grey glass on the left (Mon IA), blue glass on the right (you). No borders, no names. */
+.mon-ia-msg {
+  --glass: rgba(255, 255, 255, 0.12);
+  --shard: rgba(236, 240, 248, 0.5);
+  display: flex;
+  flex-direction: column;
+  max-width: 88%;
+  transform-origin: 0 100%;
+}
+.mon-ia-msg--user {
+  --glass: rgba(64, 160, 255, 0.32);
+  --shard: rgba(100, 180, 255, 0.6);
+  align-self: flex-end;
+  align-items: flex-end;
+  transform-origin: 100% 100%;
+}
+.mon-ia-bubble {
+  position: relative;
+  isolation: isolate;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #f4f4f5;
+  border-radius: 1.1rem;
+  overflow-wrap: anywhere;
+}
+/* plain transparent bubbles: grey for Mon IA, blue for you, no outline */
+.mon-ia-bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--glass);
+}
+.mon-ia-text {
+  position: relative;
+  z-index: 1;
+}
+.mon-ia-bubble p {
+  margin: 0;
+}
+.mon-ia-bubble p + p {
+  margin-top: 0.6rem;
+}
+.mon-ia-bubble a,
+.mon-ia-policy a {
+  color: #cfe9f7;
+  text-decoration: underline;
+}
+
+/* a new message: a short slide-up while the bubble is built from tiny flying scraps of paper */
+.mon-ia-msg--in {
+  animation: mon-ia-pop 0.3s ease both;
+}
+.mon-ia-msg--in .mon-ia-bubble::before {
+  animation: mon-ia-glass-in 0.25s ease 0.08s both;
+}
+.mon-ia-msg--in .mon-ia-text {
+  animation: mon-ia-text-in 0.2s ease 0.06s both;
+}
+.mon-ia-shards {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mon-ia-shard {
+  position: absolute;
+  background: var(--shard);
+  opacity: 0;
+  animation: mon-ia-shard 0.85s cubic-bezier(0.2, 0.8, 0.25, 1) var(--d) both;
+}
+@keyframes mon-ia-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mon-ia-shard {
+  0% { opacity: 0; transform: translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(0.2); }
+  15% { opacity: 1; }
+  62% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+@keyframes mon-ia-glass-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes mon-ia-text-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* suggested questions: plain underlined links in a list, like a chat prompt */
+.mon-ia-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0 0 0 1.4rem;
+  color: #a1a1aa;
+  list-style: disc;
+}
+.mon-ia-chip {
+  padding: 0;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  text-align: left;
+  color: #f4f4f5;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.4);
+  text-underline-offset: 0.25em;
+  background: none;
+  border: 0;
+  touch-action: manipulation;
+}
+.mon-ia-chip:hover {
+  color: #8cc8e6;
+  text-decoration-color: #8cc8e6;
+}
+
+/* "Thinking…" bubble: the phrase changes while Mon IA works */
+.mon-ia-thinking-text {
+  display: inline-block;
+  font-size: 0.9375rem;
+  background: linear-gradient(90deg, #a1a1aa 30%, #fff 50%, #a1a1aa 70%) 0 0 / 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: mon-ia-phrase 0.45s ease both, mon-ia-shimmer 1.8s linear infinite;
+}
+@keyframes mon-ia-phrase {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mon-ia-shimmer {
+  to { background-position: -220% 0; }
+}
+.mon-ia-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(228, 87, 46, 0.16);
+  border-left: 4px solid #e4572e;
+  border-radius: 0.25rem;
+}
+.mon-ia-error p {
+  margin: 0;
+  font-size: 1rem;
+  color: #f4f4f5;
+}
+
+/* message box */
+.mon-ia-compose {
+  display: flex;
+  flex: none;
+  gap: 0.6rem;
+}
+.mon-ia-input {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 1rem;
+  font-family: inherit;
+  font-size: 1rem;
+  color: #f4f4f5;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 9999px;
+}
+.mon-ia-input::placeholder {
+  color: #a1a1aa;
+}
+.mon-ia-input:focus {
+  outline: none;
+  border-color: #4fa3d1;
+  box-shadow: 0 0 0 3px rgba(79, 163, 209, 0.25);
+}
+.mon-ia-send {
+  flex: none;
+  min-height: 2.5rem;
+  padding: 0 1.25rem;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #e4572e;
+  border: 1px solid #e4572e;
+  border-radius: 9999px;
+  touch-action: manipulation;
+  transition: background 0.2s, opacity 0.2s;
+}
+.mon-ia-send:hover:not(:disabled) {
+  background: #cf4a24;
+}
+.mon-ia-send:disabled {
+  opacity: 0.4;
+}
+.mon-ia-consent {
+  flex: none;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #d4d4d8;
+}
+.mon-ia-link {
+  padding: 0;
+  font: inherit;
+  color: #8cc8e6;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+}
+.mon-ia-link:hover {
+  color: #fff;
+}
+.mon-ia-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* short laptop screens: tighten so the whole card still fits */
+@media (max-height: 700px) {
+  .mon-ia { gap: 0.5rem; padding: 0.75rem 1rem 0.7rem; }
+  .mon-ia-heading { font-size: 1.5rem; }
+  .mon-ia-head { padding-bottom: 0.5rem; }
+}
+/* tablets and phones: the card fills the width under the name */
+@media (max-width: 899px) {
+  .mon-ia-stage { max-height: none; max-width: 30rem; }
+  .mon-ia-stage::before { left: -1rem; }
+  .mon-ia-stage::after { right: -1rem; }
+}
+@media (max-width: 639px) {
+  .mon-ia-stage { max-width: none; }
+  .mon-ia { padding: 0.75rem 0.85rem 0.7rem; border-radius: 1.25rem; }
+  .mon-ia-status { display: none; }
+  .mon-ia-iconbtn:first-of-type { margin-left: auto; }
+  .mon-ia-new-label { display: none; }
+  .mon-ia-msg { max-width: 96%; }
+  .mon-ia-send { padding: 0 1.1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mon-ia-stage::before, .mon-ia-stage::after, .mon-ia-dot { animation: none; }
+  .mon-ia-msg--in, .mon-ia-msg--in .mon-ia-bubble::before, .mon-ia-msg--in .mon-ia-text { animation: none; }
+  .mon-ia-shards { display: none; }
+  .mon-ia-thinking-text { animation: none; -webkit-text-fill-color: currentColor; color: #d4d4d8; background: none; }
+}
+
+/* ---------- Privacy Policy screen (opens on top of the chat) ---------- */
+.mon-ia-policy {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #e4e4e7;
+}
+.mon-ia-policy-meta {
+  margin: 0 0 1.5rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b4b4bb;
+}
+.mon-ia-policy-heading {
+  margin: 1.75rem 0 0.5rem;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: #f4f4f5;
+}
+.mon-ia-policy p {
+  margin: 0 0 0.75rem;
+}
+.mon-ia-policy ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+.mon-ia-policy li {
+  margin-bottom: 0.4rem;
+}
