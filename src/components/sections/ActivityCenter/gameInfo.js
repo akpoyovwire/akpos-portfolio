@@ -16,8 +16,8 @@ export const LISTENING_ROOM_INFO = {
     {
       heading: "How it works",
       list: [
-        "Each song shows its artwork, the artist and a line from me about why I love it.",
-        "Press play to hear a clip of up to 60 seconds. Drag the bar to jump around, and use the speaker to change the volume or mute.",
+        "Each song shows its artwork, the artist (with their picture on the right) and a line from me about why I love it.",
+        "Press Preview to hear a clip of up to 60 seconds. The progress bar appears and you can drag it to jump around, like a normal song.",
         "Only one clip plays at a time: start another and the first one stops.",
         "When there is more than one month, pick a month from the list to see that month's five.",
       ],

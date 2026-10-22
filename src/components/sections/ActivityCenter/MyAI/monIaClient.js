@@ -11,7 +11,7 @@ export const THINKING_PHRASES = [
   "Thinking…",
   "Putting two and two together…",
   "Connecting the dots…",
-  "Reading what Akpos has approved…",
+  "Reading the inside of Akpos's mind…",
   "Choosing my words…",
   "Double-checking the facts…",
   "Almost there…",

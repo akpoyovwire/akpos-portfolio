@@ -2,13 +2,13 @@
 // The server refuses a chat message unless the browser sends this exact version, which is how
 // each recorded message carries proof of which policy the visitor was shown.
 // If you change the policy text in a way that matters, change PRIVACY_VERSION too.
-export const PRIVACY_VERSION = "2026-10-20";
+export const PRIVACY_VERSION = "2026-10-22";
 
 export const PRIVACY_CONFIG = {
   controllerName: "Ogbon Akpoyovwire Ovoko",
   location: "Port Harcourt, Nigeria",
   email: "ogbonakposofficial@gmail.com",
-  lastUpdated: "20 October 2026",
+  lastUpdated: "22 October 2026",
   databaseRetentionDays: 30, // the weekly job deletes recorded chats this many days after they were emailed
   emailRetentionMonths: 12, // how long Akpos keeps the emailed copies
 };
@@ -42,10 +42,11 @@ export const POLICY_SECTIONS = [
   },
   {
     id: "ai",
-    heading: "3. How Mon IA's answers are produced (Google Gemini)",
+    heading: "3. How Mon IA's answers are produced (Groq and Google Gemini)",
     paragraphs: [
-      "Mon IA is an automated assistant. To answer you, your recent messages are sent to Google's Gemini AI service, together with the public information about me that Mon IA is allowed to use.",
-      "I use Google's free Gemini service. Under Google's terms for that free service, Google may use the content sent to it, and the answers it generates, to provide, improve and develop its products and machine-learning technologies, and its human reviewers may read, annotate and process it. Do not type anything you would not be comfortable with a reviewer at Google reading.",
+      "Mon IA is an automated assistant. To answer you, your recent messages are sent to an AI service, together with the public information about me that Mon IA is allowed to use.",
+      "Mon IA normally uses Groq (USA), a fast AI service. Under Groq's terms, Groq does not keep the content of your messages by default, except in limited cases such as investigating abuse or reliability problems, and it is not permitted to use them to train AI models.",
+      "If Groq is slow or unavailable, your messages may be sent to Google's Gemini AI service instead. I use Google's free Gemini service. Under Google's terms for that free service, Google may use the content sent to it, and the answers it generates, to provide, improve and develop its products and machine-learning technologies, and its human reviewers may read, annotate and process it. Do not type anything you would not be comfortable with a reviewer at Google reading.",
       "Mon IA can make mistakes. Please check anything important with me directly.",
     ],
   },
@@ -64,7 +65,8 @@ export const POLICY_SECTIONS = [
     paragraphs: ["I use these services to run Mon IA. Each processes data only to provide its service:"],
     list: [
       "Vercel (USA): hosts the website and the server functions that run Mon IA, and keeps short-lived technical logs that can include your IP address.",
-      "Google (USA): the Gemini AI service described above. Google Fonts also load the website's fonts, which shares your IP address with Google when a page loads.",
+      "Groq (USA): the main AI service described above.",
+      "Google (USA): the backup Gemini AI service described above. Google Fonts also load the website's fonts, which shares your IP address with Google when a page loads.",
       "Supabase: the private database where chats are recorded.",
       "Resend (USA): delivers the weekly digest email to me.",
     ],

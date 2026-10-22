@@ -94,7 +94,7 @@ test("policy: structure is complete and has no leftovers", () => {
 
 test("policy: says what is true about how Mon IA works (Nigeria, Google free tier, recording, email, rights)", () => {
   for (const must of [
-    "Nigeria Data Protection Act 2023", "Nigeria Data Protection Commission", "https://ndpc.gov.ng", "Google", "human reviewers", "free Gemini",
+    "Nigeria Data Protection Act 2023", "Nigeria Data Protection Commission", "https://ndpc.gov.ng", "Groq", "Google", "human reviewers", "free Gemini",
     "Vercel", "Supabase", "Resend", "outside Nigeria", "72 hours", "consent", "withdraw", "18", "weekly", "recorded", PRIVACY_CONFIG.email, PRIVACY_CONFIG.controllerName,
   ]) assert.ok(policyText.includes(must), `policy is missing: ${must}`);
   assert.ok(policyText.includes(`${PRIVACY_CONFIG.databaseRetentionDays} days`));

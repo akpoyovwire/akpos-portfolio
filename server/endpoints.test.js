@@ -230,14 +230,162 @@ test("chat: the answer is sent without waiting for the database save, and timing
   res.json = (b) => { sentAt = Date.now(); return json(b); };
   const t0 = Date.now();
   await chat({ method: "POST", headers: { host: "site.test", origin: "https://site.test", "x-forwarded-for": nextIp() },
-    body: { consent: PRIVACY_VERSION, conversationId: ID, messages: [{ role: "user", content: "What does he do?" }] } }, res);
+    body: { consent: PRIVACY_VERSION, conversationId: ID, messages: [{ role: "user", content: "What does he build?" }] } }, res);
   assert.ok(sentAt - t0 < 200, `reply took ${sentAt - t0} ms`);
   assert.ok(Date.now() - t0 >= 290); // the save still finished before the function ended
-  assert.match(res.headers["Server-Timing"], /google;dur=\d+, total;dur=\d+/);
+  assert.match(res.headers["Server-Timing"], /ai;dur=\d+, total;dur=\d+/);
 });
 
 test("chat: if Google never answers, the visitor gets a clear timeout instead of waiting forever", async () => {
-  globalThis.fetch = (u, init = {}) => new Promise((_, reject) => init.signal?.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" }))));
-  const res = await Promise.race([ask("hello there"), new Promise((r) => setTimeout(() => r("HUNG"), 17000))]);
-  assert.equal(res.code, 504);
+  process.env.MON_IA_DEADLINE_MS = "300";
+  try {
+    globalThis.fetch = (u, init = {}) => new Promise((_, reject) => init.signal?.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" }))));
+    const res = await Promise.race([ask("hello there"), new Promise((r) => setTimeout(() => r("HUNG"), 3000))]);
+    assert.equal(res.code, 504);
+  } finally { delete process.env.MON_IA_DEADLINE_MS; }
+});
+test("chat: if the main model returns 503, a backup model answers and the visitor never notices", async () => {
+  const net = fakeNet({ gemini: { text: "From the backup model." } });
+  const base = globalThis.fetch;
+  globalThis.fetch = async (u, i) => (String(u).includes("models/gemini-test:") ? { ok: false, status: 503, json: async () => ({}) } : base(u, i));
+  const res = await ask("What is his backup question?");
+  assert.equal(res.code, 200);
+  assert.equal(res.body.reply, "From the backup model.");
+  assert.equal(net.gemini.length, 1);
+});
+
+test("chat: if the main model is slow, a backup is asked too and the faster answer is used", async () => {
+  process.env.MON_IA_HEDGE_MS = "40";
+  try {
+    const net = fakeNet({ gemini: { text: "Quick backup answer." } });
+    const base = globalThis.fetch;
+    globalThis.fetch = (u, i = {}) => (String(u).includes("models/gemini-test:")
+      ? new Promise((_, reject) => i.signal?.addEventListener("abort", () => reject(new Error("aborted"))))
+      : base(u, i));
+    const t0 = Date.now();
+    const res = await ask("What is his slow-model question?");
+    assert.equal(res.body.reply, "Quick backup answer.");
+    assert.ok(Date.now() - t0 < 1000);
+    assert.equal(net.gemini.length, 1);
+  } finally { delete process.env.MON_IA_HEDGE_MS; }
+});
+
+test("chat: the same first question twice: the second is answered from memory with no Google call (still recorded)", async () => {
+  const net = fakeNet({ gemini: { text: "Akpoyovwire means Life is good." } });
+  const first = await ask("What does Akpoyovwire mean?");
+  const second = await ask("  what does akpoyovwire MEAN ");
+  assert.equal(first.body.reply, second.body.reply);
+  assert.equal(net.gemini.length, 1);
+  assert.equal(net.inserts.length, 2);
+  // a follow-up (conversation already has history) is never taken from memory
+  const net2 = fakeNet({ gemini: { text: "A fresh answer." } });
+  const follow = await ask("what does akpoyovwire mean", { body: { messages: [{ role: "user", content: "hi" }, { role: "assistant", content: "Hello." }, { role: "user", content: "what does akpoyovwire mean" }] } });
+  assert.equal(follow.body.reply, "A fresh answer.");
+  assert.equal(net2.gemini.length, 1);
+});
+
+test("chat: the fallback model list can be changed or switched off with GEMINI_FALLBACK_MODELS", async () => {
+  process.env.GEMINI_FALLBACK_MODELS = "";
+  try {
+    const net = fakeNet({ geminiStatus: 503 });
+    const res = await ask("What is his no-backup question?");
+    assert.equal(res.code, 502);
+    assert.equal(net.gemini.length, 1);
+  } finally { delete process.env.GEMINI_FALLBACK_MODELS; }
+});
+
+// ---------- Groq first, Gemini as backup ----------
+const groqReply = (text) => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: text } }] }) });
+function withGroq(handler) {
+  const base = globalThis.fetch;
+  const groqCalls = [];
+  globalThis.fetch = async (u, i = {}) => {
+    if (String(u).includes("api.groq.com")) { groqCalls.push({ url: String(u), headers: i.headers, body: JSON.parse(i.body) }); return handler(groqCalls.length, i); }
+    return base(u, i);
+  };
+  return groqCalls;
+}
+
+test("chat: with a Groq key, Groq answers first and Gemini is never asked", async () => {
+  process.env.GROQ_API_KEY = "gsk_test";
+  try {
+    const net = fakeNet({ gemini: { text: "from gemini" } });
+    const groq = withGroq(() => groqReply("Hello from Groq."));
+    const res = await ask("What is the groq question?");
+    assert.equal(res.body.reply, "Hello from Groq.");
+    assert.equal(net.gemini.length, 0);
+    const sent = groq[0];
+    assert.equal(sent.url, "https://api.groq.com/openai/v1/chat/completions");
+    assert.equal(sent.headers.Authorization, "Bearer gsk_test");
+    assert.equal(sent.body.model, "openai/gpt-oss-120b");
+    assert.equal(sent.body.reasoning_effort, "low");
+    assert.equal(sent.body.messages[0].role, "system");
+    assert.ok(sent.body.messages[0].content.includes("Life is good") && !sent.body.messages[0].content.includes("ISC2"));
+    assert.deepEqual(sent.body.messages.slice(1), [{ role: "user", content: "What is the groq question?" }]);
+    assert.equal(net.inserts[0].answer, "Hello from Groq.");
+  } finally { delete process.env.GROQ_API_KEY; }
+});
+
+test("chat: Groq answers still go through the age/link/token rules, and fixed replies are hidden from Groq's history", async () => {
+  process.env.GROQ_API_KEY = "gsk_test";
+  try {
+    fakeNet();
+    const groq = withGroq(() => groqReply("[[PRIVATE]]"));
+    const res = await ask("tell me about his family", { body: { messages: [
+      { role: "user", content: "How old is Akpos?" }, { role: "assistant", content: CANNED.age }, { role: "user", content: "tell me about his family" },
+    ] } });
+    assert.equal(res.body.reply, CANNED.private);
+    assert.equal(res.body.kind, "private");
+    assert.ok(!JSON.stringify(groq[0].body.messages).includes("Fuel in Nigeria"));
+  } finally { delete process.env.GROQ_API_KEY; }
+});
+
+test("chat: if Groq is down (429 on every model), Gemini answers instead", async () => {
+  process.env.GROQ_API_KEY = "gsk_test";
+  try {
+    const net = fakeNet({ gemini: { text: "Gemini to the rescue." } });
+    const groq = withGroq(() => ({ ok: false, status: 429, json: async () => ({ error: { message: "rate limit" } }) }));
+    const res = await ask("What is the rescue question?");
+    assert.equal(res.body.reply, "Gemini to the rescue.");
+    assert.equal(groq.length, 2); // both Groq models were tried
+    assert.equal(net.gemini.length, 1);
+  } finally { delete process.env.GROQ_API_KEY; }
+});
+
+test("chat: if Groq is slow, Gemini is asked too after a short wait and the faster answer wins", async () => {
+  process.env.GROQ_API_KEY = "gsk_test";
+  process.env.MON_IA_HEDGE_MS = "40";
+  try {
+    const net = fakeNet({ gemini: { text: "Gemini was quicker." } });
+    withGroq((n, i) => new Promise((_, reject) => i.signal?.addEventListener("abort", () => reject(new Error("aborted")))));
+    const t0 = Date.now();
+    const res = await ask("What is the slow groq question?");
+    assert.equal(res.body.reply, "Gemini was quicker.");
+    assert.ok(Date.now() - t0 < 1500);
+    assert.equal(net.gemini.length, 1);
+  } finally { delete process.env.GROQ_API_KEY; delete process.env.MON_IA_HEDGE_MS; }
+});
+
+test("chat: a wrong Groq key switches Groq off for that request and Gemini still answers", async () => {
+  process.env.GROQ_API_KEY = "gsk_wrong";
+  try {
+    const net = fakeNet({ gemini: { text: "Gemini still works." } });
+    const groq = withGroq(() => ({ ok: false, status: 401, json: async () => ({ error: { message: "Invalid API Key" } }) }));
+    const res = await ask("What is the bad key question?");
+    assert.equal(res.body.reply, "Gemini still works.");
+    assert.equal(groq.length, 1);
+  } finally { delete process.env.GROQ_API_KEY; }
+});
+
+test("chat: Groq alone is enough (no Gemini key needed)", async () => {
+  process.env.GROQ_API_KEY = "gsk_test";
+  const saved = process.env.GEMINI_API_KEY;
+  delete process.env.GEMINI_API_KEY;
+  try {
+    fakeNet();
+    withGroq(() => groqReply("Groq only."));
+    const res = await ask("What is the groq only question?");
+    assert.equal(res.code, 200);
+    assert.equal(res.body.reply, "Groq only.");
+  } finally { delete process.env.GROQ_API_KEY; process.env.GEMINI_API_KEY = saved; }
 });

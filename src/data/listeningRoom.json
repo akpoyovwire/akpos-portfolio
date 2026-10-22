@@ -1,16 +1,68 @@
 {
   "tracks": [
     {
+      "id": "2026-10-1-yester-me-yester-you-yesterday",
+      "month": "2026-10",
+      "position": 1,
+      "title": "Yester-Me, Yester-You, Yesterday",
+      "artist": "Stevie Wonder",
+      "artwork": "/images/listening/2026-10-1-yester-me-yester-you-yesterday-art.jpg",
+      "artistImage": "/images/listening/artists/stevie-wonder.png",
+      "audio": "/audio/2026-10-1-yester-me-yester-you-yesterday.mp3",
+      "commentary": "It's an embodiment of nostalgia",
+      "spotifyUrl": "https://open.spotify.com/track/0l9RGwc48deJ6j61KXAAvs",
+      "published": true
+    },
+    {
+      "id": "2026-10-2-enjoy-the-show",
+      "month": "2026-10",
+      "position": 2,
+      "title": "Enjoy The Show",
+      "artist": "The Weeknd & Future",
+      "artwork": "/images/listening/2026-10-2-enjoy-the-show-art.jpg",
+      "artistImage": "/images/listening/artists/the-weeknd-future.png",
+      "audio": "/audio/2026-10-2-enjoy-the-show.mp3",
+      "commentary": "listen and find out why this is on my top 5",
+      "spotifyUrl": "https://open.spotify.com/track/637oNhilCI9UlkWkUW4Grt",
+      "published": true
+    },
+    {
       "id": "2026-10-3-coping-mechanism",
       "month": "2026-10",
       "position": 3,
       "title": "COPING MECHANISM",
       "artist": "Omah Lay & ELMAH",
       "artwork": "/images/listening/2026-10-3-coping-mechanism-art.jpg",
-      "artistImage": null,
+      "artistImage": "/images/listening/artists/omah-lay-elmah.png",
       "audio": "/audio/2026-10-3-coping-mechanism.mp3",
       "commentary": "It is divine",
       "spotifyUrl": "https://open.spotify.com/track/4vlt4Oqe5cExmtacokcNec",
+      "published": true
+    },
+    {
+      "id": "2026-10-4-how-could-you",
+      "month": "2026-10",
+      "position": 4,
+      "title": "How Could You",
+      "artist": "Buju Banton",
+      "artwork": "/images/listening/2026-10-4-how-could-you-art.jpg",
+      "artistImage": "/images/listening/artists/buju-banton.png",
+      "audio": "/audio/2026-10-4-how-could-you.mp3",
+      "commentary": "it is a must have, and it asks the big question \"HOW COULD YOU?\"",
+      "spotifyUrl": "https://open.spotify.com/track/6KFFQbypEM65CYOXjfJUDs",
+      "published": true
+    },
+    {
+      "id": "2026-10-5-spinning-globe-chikiyugi",
+      "month": "2026-10",
+      "position": 5,
+      "title": "Spinning Globe(Chikiyugi)",
+      "artist": "Kenshi Yonezu",
+      "artwork": "/images/listening/2026-10-5-spinning-globe-chikiyugi-art.jpg",
+      "artistImage": "/images/listening/artists/kenshi-yonezu.png",
+      "audio": "/audio/2026-10-5-spinning-globe-chikiyugi.mp3",
+      "commentary": "i don't understand Japanese, but music is a language everyone understands, that is why i can understand this song without actually knowin what on earth he is saying",
+      "spotifyUrl": "https://open.spotify.com/track/6x7SB38tuekpu4xpH9OIPY",
       "published": true
     }
   ]

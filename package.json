@@ -6,13 +6,15 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-       "add-track": "node scripts/add-track.mjs",
-   "validate:tracks": "node scripts/validate-tracks.mjs",
-   "prebuild": "node scripts/validate-tracks.mjs",
-   "test:mon-ia": "node --test server/monIaLogic.test.js server/monIaServices.test.js server/monIaKnowledge.test.js server/endpoints.test.js src/components/sections/ActivityCenter/MyAI/monIaClient.test.js"
+    "add-track": "node scripts/add-track.mjs",
+    "validate:tracks": "node scripts/validate-tracks.mjs",
+    "prebuild": "node scripts/validate-tracks.mjs",
+    "test:mon-ia": "node --test server/monIaLogic.test.js server/monIaServices.test.js server/monIaSpeed.test.js server/monIaKnowledge.test.js server/endpoints.test.js src/components/sections/ActivityCenter/MyAI/monIaClient.test.js",
+    "add-artist-image": "node scripts/add-artist-image.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
+    "@vercel/functions": "^3.10.3",
     "bootstrap": "^5.3.8",
     "framer-motion": "^12.23.12",
     "gsap": "^3.15.0",
@@ -23,10 +25,12 @@
     "react-icons": "^5.5.0"
   },
   "devDependencies": {
+    "@imgly/background-removal-node": "^1.4.5",
     "@vitejs/plugin-react": "^5.0.2",
     "autoprefixer": "^10.4.12",
     "music-metadata": "^12.2.3",
     "postcss": "^8.4.16",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.1.8",
     "vite": "^4.0.0"
   }

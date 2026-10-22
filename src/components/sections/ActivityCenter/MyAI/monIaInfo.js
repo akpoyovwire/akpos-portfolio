@@ -7,7 +7,7 @@ export const MON_IA_INFO = {
     {
       heading: "What it is",
       paragraphs: [
-        "Mon IA is an automated assistant, not me. It only knows the information about me that I have approved for it, and it is powered by Google's Gemini AI service.",
+        "Mon IA is an automated assistant, not me. It only knows the information about me that I have approved for it, and it is powered by AI services from Groq and Google.",
         "It can make mistakes, so please check anything important with me directly.",
       ],
     },
