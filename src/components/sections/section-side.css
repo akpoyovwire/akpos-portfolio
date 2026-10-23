@@ -18,7 +18,7 @@
   font-family: "Bebas Neue", sans-serif; font-size: 1.15rem; font-weight: 400;
   letter-spacing: 0.14em; text-transform: uppercase; color: #e4572e;
 }
-.section-side-label::before { content: ""; width: 2rem; height: 1px; background: currentColor; }
+.ss-line { flex: none; display: block; width: 2rem; height: 1px; background: currentColor; transform-origin: left center; }
 .section-side-text {
   margin: 0; font-family: "Voltaire", sans-serif; font-weight: 400;
   font-size: clamp(1.05rem, 1.4vw, 1.6rem); line-height: 1.45; color: rgba(237, 237, 242, 0.78);
@@ -56,3 +56,6 @@
 @media (prefers-reduced-motion: reduce) {
   .section-side--expertise, .section-side--expertise.is-hidden { transition: none; }
 }
+/* ----- scroll-linked unscramble (SectionSide.jsx) ----- */
+.ss-word { display: inline-block; white-space: nowrap; }
+.ss-char { display: inline-block; white-space: pre; will-change: transform; }
