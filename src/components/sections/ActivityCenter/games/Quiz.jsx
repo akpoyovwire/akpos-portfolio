@@ -151,7 +151,7 @@ export default function Quiz() {
               key={m.id}
               type="button"
               data-autofocus={i === 0 ? "" : undefined}
-              className={`quiz-mode${leaving ? (leaving === m.id ? " quiz-mode--picked" : " quiz-mode--leaving") : ""}`}
+              className={`quiz-mode quiz-mode--${m.id}${leaving ? (leaving === m.id ? " quiz-mode--picked" : " quiz-mode--leaving") : ""}`}
               onClick={() => pickMode(m.id)}
               aria-label={`${m.title}. ${m.blurb} ${m.note}.`}
             >

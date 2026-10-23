@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion"
+import SectionSide from "./SectionSide"
 import {
   Code2, ShieldCheck, BrainCircuit, FileSearch, MessageCircle,
   Sparkles, FileText, PenSquare, Presentation, Award,
@@ -551,6 +552,9 @@ export default function Expertise(props) {
       onViewportLeave={stopIntro}
       className="relative z-10 w-full h-full"
     >
+      {/* text on the left; fades away while a discipline is open */}
+      <SectionSide section="expertise" hidden={Boolean(current)} variants={props.sectionFade} />
+
       {/* LEFT COLUMN: every discipline except the open one */}
       {current && (
         <div className="absolute left-2.5 md:left-10 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-3 md:gap-4">

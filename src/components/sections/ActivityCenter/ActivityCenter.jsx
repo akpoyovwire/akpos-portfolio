@@ -7,6 +7,7 @@ import { ACTIVITIES, ACTIVITY_LOGO } from "./activityData";
 import "../../../styles/activity-center.css"; // all Activity Center + game styles live here
 import ListeningRoomModal from "./ListeningRoom/ListeningRoomModal";
 import MonIAModal from "./MyAI/MonIAModal";
+import SectionSide from "../SectionSide";
 
 // Listening Room and Mon IA get their real interfaces in later steps.
 function ComingSoonModal({ activity, onClose }) {
@@ -67,7 +68,9 @@ export default function ActivityCenter({ sectionFade = DEFAULT_FADE }) {
         {heading}
       </motion.h3>
 
-      <div className="activity-center-stage">
+      <div className="section-side-row">
+      <SectionSide section="activity" variants={sectionFade} />
+      <div className="activity-center-stage section-side-main">
         {!c.atStart && (
           <button type="button" onClick={() => c.scrollByPage(-1)} aria-label="Previous activity" className="activity-center-arrow activity-center-arrow--prev">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -78,7 +81,8 @@ export default function ActivityCenter({ sectionFade = DEFAULT_FADE }) {
 
         <div ref={c.trackRef} className="activity-center-track">
           {ACTIVITIES.map((a) => (
-            <div key={a.id} className="activity-center-card-wrap">
+            <div key={a.id} className="activity-center-card-wrap tilt-wrap">
+              <div className="tilt-inner">
               <p className="activity-center-card-label">{a.name}</p>
               <div
                 role="button"
@@ -108,6 +112,7 @@ export default function ActivityCenter({ sectionFade = DEFAULT_FADE }) {
                   <img src={ACTIVITY_LOGO} alt="" aria-hidden="true" className="activity-center-card-logo" />
                 </div>
               </div>
+              </div>
             </div>
           ))}
         </div>
@@ -120,12 +125,13 @@ export default function ActivityCenter({ sectionFade = DEFAULT_FADE }) {
           </button>
         )}
       </div>
+      </div>
 
       <div
         ref={c.sliderRef}
         onMouseDown={c.onSliderMouseDown}
         onTouchStart={c.onSliderTouchStart}
-        className={`activity-center-scrubber${c.overflowing ? "" : " activity-center-scrubber--hidden"}`}
+        className={`activity-center-scrubber section-side-scrubber${c.overflowing ? "" : " activity-center-scrubber--hidden"}`}
       >
         <div ref={c.knobRef} className="activity-center-scrubber-knob" />
       </div>

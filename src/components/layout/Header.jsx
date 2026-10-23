@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import "../../styles/header-nav.css"
 
@@ -24,6 +24,9 @@ const NAV = [
   { id: "footer", en: "Goodbye", fr: "Au-revoir", ur: "Tode",
     blurb: "Say goodbye, find where to reach me, and get in touch." },
 ]
+
+// The side stack (after the hero) leaves out Goodbye: the footer has its own links.
+const SIDE_NAV = NAV.filter((n) => n.id !== "footer")
 
 // A section becomes "current" once its top passes this fraction of the viewport height.
 const ACTIVE_RULES = [
@@ -160,24 +163,42 @@ function BarList({ hovered, setHovered }) {
 /* Vertical list: used by the side nav and the mobile menu             */
 /* ------------------------------------------------------------------ */
 
-function VerticalList({ pointer, hovered, setHovered, onNavigate, large }) {
-  const itemRefs = useRef({})
+function VerticalList({ items = NAV, pointer, hovered, setHovered, onNavigate, large }) {
+  const listRef = useRef(null)
+  const linkRefs = useRef({})
   const [y, setY] = useState(null)
 
-  useLayoutEffect(() => {
-    const el = pointer ? itemRefs.current[pointer] : null
-    setY(el ? el.offsetTop + el.offsetHeight / 2 : null)
+  // Put the arrow level with the middle of the pointed-at link. Measured from the real link boxes
+  // (not the <li>), and again whenever the list resizes or the web font finishes loading.
+  const measure = useCallback(() => {
+    const ul = listRef.current
+    const a = pointer ? linkRefs.current[pointer] : null
+    if (!ul || !a) { setY(null); return }
+    const u = ul.getBoundingClientRect()
+    const r = a.getBoundingClientRect()
+    setY(r.top - u.top + r.height / 2)
   }, [pointer])
+
+  useLayoutEffect(() => { measure() }, [measure, items])
+
+  useEffect(() => {
+    const ul = listRef.current
+    if (!ul) return undefined
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null
+    ro?.observe(ul)
+    document.fonts?.ready?.then(measure)
+    return () => ro?.disconnect()
+  }, [measure])
 
   return (
     <ul
+      ref={listRef}
       className={`nav-vlist${large ? " nav-vlist--lg" : ""}`}
       onMouseLeave={() => setHovered(null)}
     >
-      {NAV.map((item, i) => (
+      {items.map((item, i) => (
         <motion.li
           key={item.id}
-          ref={(el) => { itemRefs.current[item.id] = el }}
           initial={{ opacity: 0, x: 32 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 32 }}
@@ -185,6 +206,7 @@ function VerticalList({ pointer, hovered, setHovered, onNavigate, large }) {
           onMouseEnter={() => setHovered(item.id)}
         >
           <a
+            ref={(el) => { linkRefs.current[item.id] = el }}
             href={`#${item.id}`}
             className={`nav-vlink${hovered && hovered !== item.id ? " is-dim" : ""}`}
             onClick={onNavigate}
@@ -249,8 +271,11 @@ export default function Header() {
     }
   }, [])
 
+  // At the footer the right-hand nav goes away (the footer has its own links).
+  const stackVisible = heroGone && active !== "footer"
+
   // The bar and the stack swap places under the cursor; drop any stale hover.
-  useEffect(() => { setHovered(null) }, [heroGone])
+  useEffect(() => { setHovered(null) }, [heroGone, stackVisible])
 
   // Mobile menu: close on outside tap or Escape.
   useEffect(() => {
@@ -294,12 +319,15 @@ export default function Header() {
       <nav className="hidden md:block fixed top-6 right-3 z-40" aria-label="Primary">
         <AnimatePresence mode="wait" initial={false}>
           {heroGone ? (
-            <VerticalList
-              key="stack"
-              pointer={pointer}
-              hovered={hovered}
-              setHovered={setHovered}
-            />
+            stackVisible && (
+              <VerticalList
+                key="stack"
+                items={SIDE_NAV}
+                pointer={pointer}
+                hovered={hovered}
+                setHovered={setHovered}
+              />
+            )
           ) : (
             <BarList key="bar" hovered={hovered} setHovered={setHovered} />
           )}

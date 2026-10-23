@@ -78,3 +78,20 @@
   animation: spin 1.5s linear infinite;
   filter: var(--tool-glow);
 }
+
+/* Tilt on hover (the Undplus-style card tilt), shared by Works, Activity Center, Play and Quiz.
+   .tilt-wrap  = the box that listens for the mouse (it never moves, so the card cannot flicker at its edges)
+   .tilt-inner = what actually tilts. Cards that are a single element (Play, Quiz) tilt themselves in their own CSS.
+   Change --tilt to tilt more or less (negative = counter-clockwise). */
+:root { --tilt: -3deg; }
+.tilt-inner {
+  transform-origin: 50% 55%;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tilt-wrap:hover .tilt-inner { transform: rotate(var(--tilt)) scale(1.02); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tilt-inner { transition: none; }
+  .tilt-wrap:hover .tilt-inner { transform: none; }
+}

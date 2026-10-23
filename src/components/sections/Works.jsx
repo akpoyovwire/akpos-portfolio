@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { SiTypescript, SiReact, SiSupabase, SiPostgresql, SiVercel } from "react-icons/si";
+import SectionSide from "./SectionSide";
 
 gsap.registerPlugin(SplitText);
 
@@ -486,7 +487,9 @@ export default function Works(props) {
         {props.typedworksHeading}
       </motion.h3>
 
-      <div className="relative">
+      <div className="section-side-row">
+      <SectionSide section="works" variants={props.sectionFade} />
+      <div className="relative section-side-main">
         {!atStart && (
           <button
             onClick={() => scrollByPage(-1)}
@@ -504,11 +507,12 @@ export default function Works(props) {
             nothing can climb up into the heading above the carousel */}
         <div
           ref={trackRef}
-          className="flex overflow-x-auto scrollbar-none gap-1 px-1"
+          className="flex overflow-x-auto scrollbar-none gap-5 px-5 py-6"
           style={{ scrollBehavior: "auto" }}
         >
           {WORKS.map((p, i) => (
-            <div key={i} className="shrink-0 w-[46vw] sm:w-[420px]">
+            <div key={i} className="shrink-0 w-[46vw] sm:w-[420px] tilt-wrap">
+              <div className="tilt-inner">
               <p className="text-xs tracking-widest uppercase text-zinc-300 mb-2 px-1">
                 {p.name}
               </p>
@@ -561,6 +565,7 @@ export default function Works(props) {
                   </div>
                 </div>
               </div>
+              </div>
             </div>
           ))}
         </div>
@@ -577,6 +582,7 @@ export default function Works(props) {
           </button>
         )}
       </div>
+      </div>
 
       {/* custom scrubber replacing the native scrollbar entirely: cold blue
           (left) to hot orange (right). A plain div + drag handlers, not a
@@ -591,7 +597,7 @@ export default function Works(props) {
           dragging.current = true;
           setFromClientX(e.touches[0].clientX);
         }}
-        className="relative mx-auto mt-4 h-3 w-72 max-w-[85vw] rounded-full touch-none"
+        className="relative mx-auto mt-4 h-3 w-72 max-w-[85vw] rounded-full touch-none section-side-scrubber"
         style={{ background: "linear-gradient(to right, #4FA3D1, #E4572E)" }}
       >
         <div

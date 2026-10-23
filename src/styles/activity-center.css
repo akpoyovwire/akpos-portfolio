@@ -32,8 +32,8 @@
 }
 .activity-center-track {
   display: flex;
-  gap: 0.25rem;
-  padding: 0 0.25rem;
+  gap: 1.25rem; /* room for the cards to tilt without touching */
+  padding: 1.5rem 1.25rem; /* the track scrolls, so it must leave room for the tilted corners */
   overflow-x: auto;
   justify-content: safe center;
   scroll-behavior: auto;
@@ -315,7 +315,8 @@
   min-height: 12rem;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: minmax(0, 1fr);
-  gap: 1rem;
+  gap: 1.25rem;
+  padding: 0.5rem; /* room for the tilted corners */
   margin-top: 1rem;
 }
 @media (max-width: 767px) {
@@ -339,6 +340,19 @@
 }
 .activity-game-card:focus-visible {
   outline: 2px solid #4fa3d1;
+}
+.activity-game-card {
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .activity-game-card:hover {
+    z-index: 2;
+    transform: rotate(var(--tilt, -3deg)) scale(1.02);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .activity-game-card { transition: none; }
+  .activity-game-card:hover { transform: none; }
 }
 .activity-game-card-fallback {
   position: absolute;

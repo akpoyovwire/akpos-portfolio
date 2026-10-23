@@ -1,0 +1,58 @@
+/* Left-hand text beside Expertise, Works and Activity Center (SectionSide.jsx).
+   It sits in the space on the left and the page's map background shows through it (no box, no fill). */
+:root { --side-w: clamp(15rem, 21vw, 24rem); }
+
+.section-side { display: none; }
+.section-side-inner { position: relative; isolation: isolate; max-width: 100%; }
+
+/* big grey number behind the words */
+.section-side-num {
+  position: absolute; z-index: -1; left: -0.04em; top: 50%; transform: translateY(-50%);
+  font-family: "Bebas Neue", sans-serif; font-weight: 400; line-height: 0.8; white-space: nowrap;
+  font-size: clamp(9rem, 17vw, 18rem); letter-spacing: 0.02em;
+  color: rgba(237, 237, 242, 0.07); pointer-events: none; user-select: none;
+}
+
+.section-side-label {
+  display: flex; align-items: center; gap: 0.75rem; margin: 0 0 0.75rem;
+  font-family: "Bebas Neue", sans-serif; font-size: 1.15rem; font-weight: 400;
+  letter-spacing: 0.14em; text-transform: uppercase; color: #e4572e;
+}
+.section-side-label::before { content: ""; width: 2rem; height: 1px; background: currentColor; }
+.section-side-text {
+  margin: 0; font-family: "Voltaire", sans-serif; font-weight: 400;
+  font-size: clamp(1.05rem, 1.4vw, 1.6rem); line-height: 1.45; color: rgba(237, 237, 242, 0.78);
+}
+
+/* ----- Works + Activity Center: the carousel moves right to make room ----- */
+@media (min-width: 900px) {
+  .section-side-row { display: flex; align-items: stretch; }
+  .section-side-main { flex: 1 1 0; min-width: 0; }
+  .section-side--works,
+  .section-side--activity {
+    display: flex; align-self: center; flex: 0 0 var(--side-w); box-sizing: border-box;
+    padding: 0 1.5rem 0 clamp(1.5rem, 3vw, 3rem);   /* vertically centred beside the cards */
+  }
+  /* keep the dial centred under the carousel instead of under the whole page */
+  .section-side-scrubber.section-side-scrubber {
+    margin-left: calc(var(--side-w) + (100% - var(--side-w) - min(18rem, 85vw)) / 2);
+    margin-right: 0;
+  }
+}
+
+/* ----- Expertise: fills the empty left space, fades away when a discipline is open ----- */
+@media (min-width: 1100px) {
+  .section-side--expertise {
+    display: block; position: absolute; z-index: 5;
+    left: clamp(1.5rem, 3vw, 3rem); top: 45%; translate: 0 -50%;   /* mid-height, a little above centre */
+    width: clamp(14rem, 21vw, 24rem);
+    transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0s;
+  }
+  .section-side--expertise.is-hidden {
+    opacity: 0; transform: translateX(-1rem); visibility: hidden; pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-side--expertise, .section-side--expertise.is-hidden { transition: none; }
+}
