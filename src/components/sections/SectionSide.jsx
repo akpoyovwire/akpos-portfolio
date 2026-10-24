@@ -7,6 +7,7 @@ import "./section-side.css";
 //   Works + Activity Center: put <SectionSide> beside the carousel inside a .section-side-row (see Works.jsx / ActivityCenter.jsx).
 //   Expertise: put it inside the section root (which must be position: relative) and pass hidden={true}
 //   while a discipline is open, so it fades away.
+// Optional children (Works passes its arrow buttons) are shown under the words.
 // Phones: hidden by CSS (under 900px, and under 1100px for Expertise).
 //
 // SCROLL-LINKED UNSCRAMBLE
@@ -41,6 +42,10 @@ const SCRAMBLE = {
   flyers: 0.22,       // share of letters that also drift / tilt / blur
   spread: 0.4,        // 0-1: how staggered the letters are as they settle
 };
+
+// Phones: the words sit low in the section and the page can't scroll them any higher, so they
+// must already be readable while their centre is still near the bottom of the screen.
+const SCRAMBLE_PHONE = { ...SCRAMBLE, enterFrom: 1.1, readableAt: 0.97 };
 
 // App.jsx's StackLayer dims a section with a black overlay (opacity 0 -> DIM_MAX) while the
 // next section slides over it. That overlay is the "being covered" signal for Expertise and
@@ -83,7 +88,13 @@ function Letters({ text }) {
   ));
 }
 
-export default function SectionSide({ section, hidden = false }) {
+const pad2 = (n) => String(n).padStart(2, "0");
+
+// counter (Works only): { n, total, name } -> "01 / 05  NAME" above the label. Leave name ""
+// and only "02 / 05" shows.
+export default function SectionSide({ section, hidden = false, phone = false, counter = null, children }) {
+  // phone: a second copy for phones only (Works shows it under its arrows). It gets its own
+  // class so the desktop left-column rules do not apply to it.
   const c = SECTION_SIDE[section];
   const rootRef = useRef(null);
 
@@ -102,17 +113,18 @@ export default function SectionSide({ section, hidden = false }) {
 
     // READ phase. Where is the block, and is another section sliding over it?
     const measure = (vh, maxScroll, scrollY) => {
+      const S = phone ? SCRAMBLE_PHONE : SCRAMBLE;
       const r = root.getBoundingClientRect();
       const half = r.height / 2;
       const centre = (r.top + half) / vh;
       // at the very end of the page it can't rise any further: be readable by then
       const centreAtEnd = (r.top + half - (maxScroll - scrollY)) / vh;
-      const readable = Math.min(SCRAMBLE.enterFrom - 0.05, Math.max(SCRAMBLE.readableAt, centreAtEnd));
-      const enter = clamp((SCRAMBLE.enterFrom - centre) / (SCRAMBLE.enterFrom - readable));
-      const leave = clamp(centre / SCRAMBLE.leaveAt);
+      const readable = Math.min(S.enterFrom - 0.05, Math.max(S.readableAt, centreAtEnd));
+      const enter = clamp((S.enterFrom - centre) / (S.enterFrom - readable));
+      const leave = clamp(centre / S.leaveAt);
       // covered by the next section (App.jsx's dim overlay is the layer's next sibling)
       const dim = layer?.nextElementSibling;
-      const covered = dim ? clamp((parseFloat(dim.style.opacity) || 0) / DIM_MAX / SCRAMBLE.coverDone) : 0;
+      const covered = dim ? clamp((parseFloat(dim.style.opacity) || 0) / DIM_MAX / S.coverDone) : 0;
       want = Math.min(enter, leave, 1 - covered);
     };
     // WRITE phase.
@@ -200,15 +212,26 @@ export default function SectionSide({ section, hidden = false }) {
       window.removeEventListener("resize", onResize);
       teardown();
     };
-  }, [c]);
+  }, [c, phone]);
 
   if (!c) return null;
   return (
-    <div className={`section-side section-side--${section}${hidden ? " is-hidden" : ""}`} aria-hidden={hidden || undefined}>
+    <div className={`section-side section-side--${phone ? `${section}-phone` : section}${hidden ? " is-hidden" : ""}`} aria-hidden={hidden || undefined}>
       <aside ref={rootRef} className="section-side-inner" aria-label={`About ${c.label}`}>
         <span className="section-side-num" aria-hidden="true">{c.num}</span>
+        {counter ? (
+          <div className="section-side-counter" aria-live="polite" aria-label={`Project ${counter.n} of ${counter.total}${counter.name ? `: ${counter.name}` : ""}`}>
+            <span key={counter.n} className="ssc-fade" aria-hidden="true">
+              <span className="ssc-num">{pad2(counter.n)}</span>
+              <span className="ssc-sep">/</span>
+              <span className="ssc-total">{pad2(counter.total)}</span>
+              {counter.name ? <span className="ssc-name">{counter.name}</span> : null}
+            </span>
+          </div>
+        ) : null}
         <p className="section-side-label" aria-label={c.label}><span className="ss-line" aria-hidden="true" /><Letters text={c.label} /></p>
         <p className="section-side-text" aria-label={c.text}><Letters text={c.text} /></p>
+        {children ? <div className="section-side-extra">{children}</div> : null}
       </aside>
     </div>
   );

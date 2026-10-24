@@ -5,6 +5,11 @@ import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { SiTypescript, SiReact, SiSupabase, SiPostgresql, SiVercel } from "react-icons/si";
 import SectionSide from "./SectionSide";
+import WorksArrows from "./WorksArrows";
+import {
+  slotFor, wander, roamWeight, scopeView, focusWeight, zFor, clamp, STEP_X,
+  positionFromRatio, ratioFromPosition, nearestIndex,
+} from "./worksStageLogic";
 
 gsap.registerPlugin(SplitText);
 
@@ -20,11 +25,38 @@ const MY_LOGO = "/logos/logo.svg";
 const PLACEHOLDER_LOGO = "/logos/app-placeholder.png";
 
 // Two-finger trackpad swipe over the carousel:
-//   WHEEL_SPEED  how far it travels per swipe (1 = exactly the finger distance)
+//   WHEEL_SPEED  how far it travels per swipe (1 = a swipe as long as the gap
+//                between two cards moves the carousel by exactly one card)
 //   WHEEL_GLIDE  0-1, how quickly it catches up to where the swipe is heading.
 //                Lower = longer, floatier glide (Lenis on the page uses 0.12).
 const WHEEL_SPEED = 5;
 const WHEEL_GLIDE = 0.12;
+
+//   WHEEL_SETTLE_MS  quiet time after the last swipe event before it eases onto
+//                    the nearest card (trackpad momentum keeps events coming, so
+//                    this waits for the coast to finish)
+const WHEEL_SETTLE_MS = 140;
+
+// Dragging the stage with a mouse or finger:
+//   DRAG_THRESHOLD  px of movement before a press stops being a click
+//   FLICK_MS        a fast release carries on as if the pointer kept its speed
+//                   for this long (bigger = flicks travel further)
+const DRAG_THRESHOLD = 8;
+const FLICK_MS = 120;
+const FLICK_IDLE_MS = 80; // if the pointer sat still this long before release, there is no flick
+
+// Size of the focused card:
+//   FOCUS_MAX     never wider than this many px
+//   FOCUS_ASPECT  width / height. A landscape rectangle: 1.8 = long, not tall.
+//   FOCUS_H_MAX   never taller than this share of the screen height (and 440px)
+//   STAGE_EXTRA   room above / below the focused card for the floating cards. Smaller
+//                 = the stage is shorter, so the dial underneath sits higher.
+const FOCUS_MAX = 780;
+const FOCUS_ASPECT = 1.8;
+const FOCUS_H_MAX = 0.42;
+const STAGE_EXTRA = "8rem";
+
+const NO_DRIFT = { x: 0, y: 0 };
 
 // Tool icons for the details overlay. Add a key here, then use it in a
 // work's "tools" array. Supabase and PostgreSQL are separate entries, each
@@ -322,151 +354,420 @@ function WorkDetails({ work, onClose, fontFamily }) {
   );
 }
 
-export default function Works(props) {
-  const trackRef = useRef(null);
-  const sliderRef = useRef(null);
-  const knobRef = useRef(null); // the dial knob; moved directly, not through React state
-  const dragging = useRef(false);
+/*
+  THE DEPTH STAGE (replaces the old scrolling row of cards)
 
-  const [atStart, setAtStart] = useState(true);
-  const [atEnd, setAtEnd] = useState(false);
+  All cards live on one stage. Each frame, every card is placed and SHAPED by
+  slotFor(d) (see worksStageLogic.js), where d is how far it is from the focused
+  position p:
+      d = 0   -> centre, the big landscape rectangle, sharp, still  (the card in focus)
+      d = +-1 -> a small landscape rectangle, blurred
+      d = +-2 -> smaller and blurrier
+      d >= 3  -> gone
+  p is a float. The arrows tween it, the dial scrubs it, a swipe / drag glides it,
+  the left / right arrow keys step it - and the cards simply follow.
+
+  BACKGROUND FLOAT: every card not in focus roams the WHOLE stage (edge to edge) on its
+  own diagonal path with a small 360 swirl (wander() in the logic file).
+  SCOPE VIEW: the focused card's picture zooms in on a spot and out again, and scrolls
+  through its whole length (scopeView() in the logic file).
+
+  Positions are written straight to each card's style from one gsap ticker - React
+  never re-renders per frame. The ticker pauses when the section is off screen.
+  Floating, Ken Burns and tweening are skipped for prefers-reduced-motion.
+
+  CLICKING: the focused card opens the details overlay; any other card comes into
+  focus first (one more click opens it).
+*/
+export default function Works(props) {
+  const stageRef = useRef(null);
+  const cardRefs = useRef([]);
+  const faceRefs = useRef([]);
+  const imgRefs = useRef([]);
+  const natRefs = useRef([]); // each picture's own size, once loaded
+  const sliderRef = useRef(null);
+  const knobRef = useRef(null);
+  const dragging = useRef(false);
+  const cardDrag = useRef(null);
+  const endCardDragRef = useRef(null);
+  const detailsOpen = useRef(false);
+
+  const [focusIndex, setFocusIndex] = useState(0);
   const sectionRef = useRef(null);
-  const [active, setActive] = useState(null); // { work, fontFamily } while details are open
+  const [active, setActive] = useState(null);
+  detailsOpen.current = !!active;
+
+  const eng = useRef({
+    pos: { p: 0 },
+    dest: 0,
+    glide: false,
+    glideTarget: 0,
+    settleTimer: 0,
+    w: 0,
+    h: 0,
+    cardW: 0,
+    cardH: 0,
+    t: 0,
+    visible: true,
+    reduce: false,
+    suppressClick: false,
+    last: [],
+    flags: { focus: 0 },
+  });
+
+  const COUNT = WORKS.length;
 
   const openDetails = (work) => {
     const fontFamily = sectionRef.current ? getComputedStyle(sectionRef.current).fontFamily : undefined;
     setActive({ work, fontFamily });
   };
 
-  // The knob position used to be React state (setProgress), which re-rendered
-  // this whole component - the section, all five cards - on every single
-  // scroll frame while swiping. It's now written straight to the knob's
-  // style. setAtStart / setAtEnd only cause a re-render when they actually
-  // flip (React skips a set to the same value).
-  const syncFromScroll = () => {
-    const el = trackRef.current;
-    if (!el) return;
-    const max = el.scrollWidth - el.clientWidth;
-    setAtStart(el.scrollLeft <= 4);
-    setAtEnd(el.scrollLeft >= max - 4);
-    const p = max > 0 ? el.scrollLeft / max : 0;
-    if (knobRef.current) knobRef.current.style.left = `calc(${p * 100}% - 8px)`;
-  };
+  // ---- drawing -----------------------------------------------------------
 
-  // Batched via requestAnimationFrame, same pattern as the rest of the
-  // site's scroll listeners. A raw "scroll" event can fire dozens of times
-  // per second while dragging - reading scrollWidth/clientWidth (a layout
-  // read) on every single one of those, unthrottled, adds needless layout
-  // work exactly while the carousel is being actively dragged, which is
-  // when it's most likely to be felt as stiffness (touch drag especially).
-  useEffect(() => {
-    let ticking = false;
-    const onScroll = () => {
-      if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; syncFromScroll(); }); }
-    };
-    syncFromScroll();
-    const el = trackRef.current;
-    el.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, []);
+  const renderStage = useCallback((time) => {
+    const e = eng.current;
+    const p = e.pos.p;
+    for (let i = 0; i < COUNT; i++) {
+      const wrap = cardRefs.current[i];
+      const face = faceRefs.current[i];
+      if (!wrap || !face) continue;
+      const d = i - p;
+      const s = slotFor(d);
+      const c = e.last[i] || (e.last[i] = {});
 
-  // TWO-FINGER TRACKPAD SWIPE (and shift+wheel) over the carousel.
-  // Two things were going on:
-  //  1) Lenis listens for wheel on window and, for any swipe with even a tiny
-  //     vertical part (every real swipe has one), cancels the browser's
-  //     native scroll and moves the PAGE instead - so the carousel only got
-  //     the rare perfectly-horizontal events.
-  //  2) The browser's own trackpad scrolling also adds MOMENTUM: a short flick
-  //     keeps coasting after your fingers lift. The moment we take the swipe
-  //     over (preventDefault) that built-in momentum is gone, so the
-  //     carousel stopped dead when your fingers did and felt slow.
-  // So: a mostly-horizontal swipe is stopped before Lenis, and instead of
-  // jumping scrollLeft, it moves a TARGET that the carousel glides toward
-  // every frame (same idea Lenis uses for the page). Mostly-vertical swipes
-  // are left alone, so scrolling the page over the carousel still works.
-  useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    let target = el.scrollLeft;
-    let pos = el.scrollLeft;
-    let running = false;
+      // position: the slot next to focus, handing over to the card's own wander
+      // across the whole stage as it moves away from focus
+      const f = e.reduce ? 0 : roamWeight(d);
+      const r = f > 0 ? wander(i, time, e.w, e.h) : NO_DRIFT;
+      const px = s.x * e.w * (1 - f) + r.x * f;
+      const py = s.y * e.h * (1 - f) + r.y * f;
+      c.px = px; c.py = py; c.op = s.opacity; // remembered for the up / down keys
+      wrap.style.transform =
+        `translate3d(${px.toFixed(2)}px, ${py.toFixed(2)}px, 0) translate(-50%, -50%)`;
 
-    const tick = () => {
-      pos += (target - pos) * WHEEL_GLIDE;
-      if (Math.abs(target - pos) < 0.5) {
-        pos = target;
-        running = false;
-        gsap.ticker.remove(tick);
+      // a real resize: width on the wrapper, height + corners on the face
+      const cw = Math.round(e.cardW * s.wf * 10) / 10;
+      const ch = Math.round(e.cardH * s.hf * 10) / 10;
+      const rad = Math.round(s.radius * 10) / 10;
+      if (c.cw !== cw) { wrap.style.width = `${cw}px`; c.cw = cw; }
+      if (c.ch !== ch) { face.style.height = `${ch}px`; c.ch = ch; }
+      if (c.rad !== rad) { face.style.borderRadius = `${rad}px`; c.rad = rad; }
+
+      const blur = s.blur < 0.05 ? 0 : Math.round(s.blur * 4) / 4;
+      if (c.blur !== blur) { wrap.style.filter = blur ? `blur(${blur}px)` : "none"; c.blur = blur; }
+      const opacity = Math.round(s.opacity * 100) / 100;
+      if (c.opacity !== opacity) { wrap.style.opacity = String(opacity); c.opacity = opacity; }
+      const visibility = opacity > 0.01 ? "visible" : "hidden";
+      if (c.visibility !== visibility) { wrap.style.visibility = visibility; c.visibility = visibility; }
+      const z = zFor(d);
+      if (c.z !== z) { wrap.style.zIndex = String(z); c.z = z; }
+      // every visible card can be clicked, however far back it is (hidden ones can't be)
+      const pe = Math.abs(d) < 3 ? "auto" : "none";
+      if (c.pe !== pe) { wrap.style.pointerEvents = pe; c.pe = pe; }
+
+      // Scope view (scopeView in the logic file): the picture zooms in on a spot and
+      // out again, and scrolls through its whole length whatever its shape. Restarts
+      // every time the card comes within one slot of focus, and fades in with how close.
+      const img = imgRefs.current[i];
+      const nat = natRefs.current[i];
+      if (img && nat) {
+        const near = Math.abs(d) < 1;
+        if (near && !c.kbOn) { c.kbOn = true; c.kbStart = time; c.kbVisits = (c.kbVisits || 0) + 1; }
+        else if (!near && c.kbOn) c.kbOn = false;
+        const live = c.kbOn && !e.reduce;
+        const v = scopeView({
+          natW: nat.w,
+          natH: nat.h,
+          cardW: cw,
+          cardH: ch,
+          dirIndex: i + (c.kbVisits || 0) * 3,
+          elapsed: live ? time - c.kbStart : 0,
+          weight: live ? focusWeight(d) : 0,
+        });
+        const size = `${v.iw.toFixed(1)}px ${v.ih.toFixed(1)}px`;
+        if (c.imgSize !== size) {
+          img.style.width = `${v.iw.toFixed(1)}px`;
+          img.style.height = `${v.ih.toFixed(1)}px`;
+          c.imgSize = size;
+        }
+        const tf = `translate3d(${v.tx.toFixed(2)}px, ${v.ty.toFixed(2)}px, 0) scale(${v.scale.toFixed(4)})`;
+        if (c.imgTf !== tf) { img.style.transform = tf; c.imgTf = tf; }
       }
-      el.scrollLeft = pos;
-    };
+    }
+  }, [COUNT]);
 
-    const onWheel = (e) => {
-      const horizontalIntent = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
+  const syncUi = useCallback(() => {
+    const e = eng.current;
+    const p = e.pos.p;
+    if (knobRef.current) {
+      knobRef.current.style.left = `calc(${ratioFromPosition(p, COUNT) * 100}% - 8px)`;
+    }
+    const focus = nearestIndex(p, COUNT);
+    if (focus !== e.flags.focus) { e.flags.focus = focus; setFocusIndex(focus); }
+  }, [COUNT]);
+
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const e = eng.current;
+    e.reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const measure = () => {
+      e.w = stage.clientWidth;
+      e.h = stage.clientHeight;
+      // focused card: a landscape rectangle, as wide as FOCUS_MAX / the stage allows
+      // (wider share of the stage on a phone) but never taller than FOCUS_H_MAX
+      const hMax = Math.min(window.innerHeight * FOCUS_H_MAX, 440);
+      e.cardW = Math.min(e.w * (e.w < 600 ? 0.8 : 0.62), hMax * FOCUS_ASPECT, FOCUS_MAX);
+      e.cardH = e.cardW / FOCUS_ASPECT;
+      // phones: the stage is only as tall as the focused card plus a little float room
+      // (see .works-stage in section-side.css)
+      stage.style.setProperty("--works-card-h", `${e.cardH.toFixed(1)}px`);
+      renderStage(e.t);
+      syncUi();
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(stage);
+    return () => ro.disconnect();
+  }, [renderStage, syncUi]);
+
+  useEffect(() => {
+    const e = eng.current;
+    const frame = (time) => {
+      const dt = Math.min(0.1, Math.max(0, time - e.t));
+      e.t = time;
+      if (!e.visible) return;
+      if (e.glide) {
+        const k = 1 - Math.pow(1 - WHEEL_GLIDE, dt * 60);
+        e.pos.p += (e.glideTarget - e.pos.p) * k;
+        if (Math.abs(e.glideTarget - e.pos.p) < 0.001) {
+          e.pos.p = e.glideTarget;
+          e.glide = false;
+        }
+      }
+      renderStage(time);
+      syncUi();
+    };
+    gsap.ticker.add(frame);
+
+    const io = new IntersectionObserver(
+      ([entry]) => { e.visible = entry.isIntersecting; },
+      { rootMargin: "200px 0px" }
+    );
+    io.observe(stageRef.current);
+
+    return () => {
+      gsap.ticker.remove(frame);
+      io.disconnect();
+      gsap.killTweensOf(e.pos);
+      clearTimeout(e.settleTimer);
+    };
+  }, [renderStage, syncUi]);
+
+  // ---- moving ------------------------------------------------------------
+
+  const heading = useCallback(() => {
+    const e = eng.current;
+    return nearestIndex(e.glide ? e.glideTarget : e.dest, COUNT);
+  }, [COUNT]);
+
+  const goTo = useCallback((target, snap = false) => {
+    const e = eng.current;
+    const to = nearestIndex(target, COUNT);
+    e.dest = to;
+    e.glide = false;
+    clearTimeout(e.settleTimer);
+    gsap.killTweensOf(e.pos);
+    if (e.reduce) { e.pos.p = to; return; }
+    const dist = Math.abs(to - e.pos.p);
+    gsap.to(
+      e.pos,
+      snap
+        ? { p: to, duration: 0.5, ease: "power3.out" }
+        : { p: to, duration: Math.min(1.3, 0.75 + 0.15 * dist), ease: "power3.inOut" }
+    );
+  }, [COUNT]);
+
+  // arrows wrap round: Next on the last work goes to the first, Previous on the first
+  // goes to the last. (The dial does not wrap.)
+  const step = useCallback((dir) => goTo((heading() + dir + COUNT) % COUNT), [goTo, heading, COUNT]);
+
+  // LEFT / RIGHT ARROW KEYS move the carousel from anywhere on the page while the
+  // Works section is on screen. Ignored while typing in a field, with a modifier key
+  // held, while the details overlay (or any modal that locks page scroll) is open,
+  // and when the carousel is mostly off screen.
+  useEffect(() => {
+    const onKey = (ev) => {
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(ev.key)) return;
+      if (ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+      const t = ev.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (detailsOpen.current || document.body.style.overflow === "hidden") return;
+      const stage = stageRef.current;
+      if (!stage) return;
+      const r = stage.getBoundingClientRect();
+      const shown = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0);
+      if (shown < r.height * 0.4) return;
+      ev.preventDefault();
+      let next;
+      if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") {
+        next = (heading() + (ev.key === "ArrowRight" ? 1 : -1) + COUNT) % COUNT; // wraps round
+      } else {
+        // UP / DOWN: bring the closest floating card into focus. Up prefers the closest
+        // one that is above the focused card, Down the closest below; if none is on that
+        // side, the closest of all.
+        const L = eng.current.last;
+        const from = heading();
+        const fc = L[from] || { px: 0, py: 0 };
+        let near = -1, nearD = Infinity, any = -1, anyD = Infinity;
+        for (let i = 0; i < COUNT; i++) {
+          const c = L[i];
+          if (i === from || !c || c.op < 0.3) continue;
+          const dist = Math.hypot(c.px - fc.px, c.py - fc.py);
+          if (dist < anyD) { any = i; anyD = dist; }
+          const sideOk = ev.key === "ArrowUp" ? c.py < fc.py : c.py > fc.py;
+          if (sideOk && dist < nearD) { near = i; nearD = dist; }
+        }
+        next = near >= 0 ? near : any;
+        if (next < 0) return;
+      }
+      goTo(next);
+      if (stage.contains(document.activeElement)) faceRefs.current[next]?.focus({ preventScroll: true });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [COUNT, goTo, heading]);
+
+  // TWO-FINGER TRACKPAD SWIPE (and shift+wheel) over the stage: stopped before Lenis
+  // and moves a target the carousel glides toward; mostly-vertical swipes are left
+  // alone so the page still scrolls. After WHEEL_SETTLE_MS of quiet it eases onto
+  // the nearest card.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const e = eng.current;
+
+    const onWheel = (ev) => {
+      const horizontalIntent = ev.shiftKey || Math.abs(ev.deltaX) > Math.abs(ev.deltaY);
       if (!horizontalIntent) return;
-      e.preventDefault();
-      e.stopPropagation();
+      ev.preventDefault();
+      ev.stopPropagation();
 
-      // if something else moved the carousel (arrows, dial), start from there
-      if (!running) target = pos = el.scrollLeft;
+      if (!e.glide) e.glideTarget = e.pos.p;
+      gsap.killTweensOf(e.pos);
 
-      const raw = e.shiftKey ? e.deltaY || e.deltaX : e.deltaX;
-      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? el.clientWidth : 1;
-      const max = el.scrollWidth - el.clientWidth;
-      target = Math.min(max, Math.max(0, target + raw * unit * WHEEL_SPEED));
+      const raw = ev.shiftKey ? ev.deltaY || ev.deltaX : ev.deltaX;
+      const unit = ev.deltaMode === 1 ? 16 : ev.deltaMode === 2 ? stage.clientWidth : 1;
+      const cardPx = STEP_X * (e.w || stage.clientWidth);
+      e.glideTarget = clamp(e.glideTarget + (raw * unit * WHEEL_SPEED) / cardPx, 0, COUNT - 1);
+      e.glide = true;
 
-      if (!running) {
-        running = true;
-        gsap.ticker.add(tick);
-      }
+      clearTimeout(e.settleTimer);
+      e.settleTimer = setTimeout(() => {
+        e.glideTarget = nearestIndex(e.glideTarget, COUNT);
+        e.dest = e.glideTarget;
+        e.glide = true;
+      }, WHEEL_SETTLE_MS);
     };
 
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-      gsap.ticker.remove(tick);
-    };
-  }, []);
+    stage.addEventListener("wheel", onWheel, { passive: false });
+    return () => stage.removeEventListener("wheel", onWheel);
+  }, [COUNT]);
 
-  // Netflix-style arrows: only show the ones that would actually do something
-  const scrollByPage = (dir) => {
-    const el = trackRef.current;
-    el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: "smooth" });
+  // DRAG (mouse or finger) on the stage. Under DRAG_THRESHOLD px it is still a click.
+  const onStagePointerDown = (ev) => {
+    if (ev.pointerType === "mouse" && ev.button !== 0) return;
+    cardDrag.current = {
+      id: ev.pointerId,
+      x0: ev.clientX,
+      p0: eng.current.pos.p,
+      moved: false,
+      vx: 0,
+      lx: ev.clientX,
+      lt: ev.timeStamp,
+    };
   };
 
-  // dragging the volume-dial knob scrubs the carousel directly
+  const onStagePointerEnd = (ev) => {
+    const d = cardDrag.current;
+    if (!d || (ev.pointerId !== undefined && ev.pointerId !== d.id)) return;
+    cardDrag.current = null;
+    if (!d.moved) return;
+    const e = eng.current;
+    e.suppressClick = true;
+    setTimeout(() => { e.suppressClick = false; }, 60);
+    const vx = ev.timeStamp - d.lt > FLICK_IDLE_MS ? 0 : d.vx;
+    const carry = clamp(-(vx * FLICK_MS) / (STEP_X * e.w), -1, 1);
+    goTo(e.pos.p + carry, true);
+  };
+  endCardDragRef.current = onStagePointerEnd;
+
+  const onStagePointerMove = (ev) => {
+    const d = cardDrag.current;
+    if (!d || ev.pointerId !== d.id) return;
+    if (ev.pointerType === "mouse" && ev.buttons === 0) return onStagePointerEnd(ev);
+    const e = eng.current;
+    const dx = ev.clientX - d.x0;
+    if (!d.moved) {
+      if (Math.abs(dx) < DRAG_THRESHOLD) return;
+      d.moved = true;
+      stageRef.current.setPointerCapture(ev.pointerId);
+      e.glide = false;
+      clearTimeout(e.settleTimer);
+      gsap.killTweensOf(e.pos);
+    }
+    const dt = Math.max(1, ev.timeStamp - d.lt);
+    d.vx = 0.8 * d.vx + 0.2 * ((ev.clientX - d.lx) / dt);
+    d.lx = ev.clientX;
+    d.lt = ev.timeStamp;
+    e.pos.p = clamp(d.p0 - dx / (STEP_X * e.w), 0, COUNT - 1);
+  };
+
+  const activateCard = (i) => {
+    if (eng.current.suppressClick) return;
+    if (i === heading()) openDetails(WORKS[i]);
+    else goTo(i);
+  };
+
+  // ---- the dial ----------------------------------------------------------
+
   const setFromClientX = (clientX) => {
     const rect = sliderRef.current.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    const el = trackRef.current;
-    el.scrollLeft = ratio * (el.scrollWidth - el.clientWidth);
+    const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
+    const e = eng.current;
+    e.glide = false;
+    clearTimeout(e.settleTimer);
+    gsap.killTweensOf(e.pos);
+    e.pos.p = positionFromRatio(ratio, COUNT);
+    e.dest = nearestIndex(e.pos.p, COUNT);
   };
 
+  // STUCK-DIAL FIX. The old dial listened for a window "mouseup", which is never
+  // delivered if the button is released outside the window, if the browser starts a
+  // native text / image drag, or if the window loses focus - the knob then kept
+  // following the cursor with no button held. Now the dial CAPTURES the pointer (its
+  // release is always delivered to it), any move with no button held counts as a
+  // release, losing the window also releases, and native drag-start is cancelled.
+  const releaseDial = useCallback(() => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    goTo(eng.current.pos.p, true);
+  }, [goTo]);
+
   useEffect(() => {
-    const onMove = (e) => dragging.current && setFromClientX(e.clientX);
-    const onUp = () => (dragging.current = false);
-    const onTouchMove = (e) => {
-      if (!dragging.current) return;
-      e.preventDefault();
-      setFromClientX(e.touches[0].clientX);
+    const onBlur = () => releaseDial();
+    const onUp = (ev) => {
+      releaseDial();
+      endCardDragRef.current?.(ev);
     };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    // passive:false so we can preventDefault - otherwise the page itself
-    // tries to scroll vertically while a finger is dragging the knob
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("touchend", onUp);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onUp);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
     };
-  }, []);
+  }, [releaseDial]);
 
   const closeDetails = useCallback(() => setActive(null), []);
 
@@ -488,116 +789,148 @@ export default function Works(props) {
       </motion.h3>
 
       <div className="section-side-row">
-      <SectionSide section="works" variants={props.sectionFade} />
+      <SectionSide
+        section="works"
+        variants={props.sectionFade}
+        counter={{
+          n: focusIndex + 1,
+          total: COUNT,
+          // only finished works show their name; the placeholders show just the number
+          name: WORKS[focusIndex].image ? WORKS[focusIndex].name : "",
+        }}
+      >
+        {/* the arrow pair lives in the left column, under the section words */}
+        <WorksArrows
+          onPrev={() => step(-1)}
+          onNext={() => step(1)}
+        />
+      </SectionSide>
       <div className="relative section-side-main">
-        {!atStart && (
-          <button
-            onClick={() => scrollByPage(-1)}
-            aria-label="Previous work"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center"
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M15 6l-6 6 6 6" />
-            </svg>
-          </button>
-        )}
-
-        {/* the name label sits in normal flow above the image and never
-            moves on its own - only the image below scales on hover, so
-            nothing can climb up into the heading above the carousel */}
+        {/* The stage. "isolate" keeps the cards' z-index (up to 100) from climbing
+            above anything outside it. touch-pan-y: a finger can still scroll the page
+            vertically, a horizontal drag is ours. */}
         <div
-          ref={trackRef}
-          className="flex overflow-x-auto scrollbar-none gap-5 px-5 py-6"
-          style={{ scrollBehavior: "auto" }}
+          ref={stageRef}
+          className="works-stage relative isolate w-full overflow-hidden select-none touch-pan-y"
+          style={{ "--stage-extra": STAGE_EXTRA }}
+          onPointerDown={onStagePointerDown}
+          onPointerMove={onStagePointerMove}
+          onPointerUp={onStagePointerEnd}
+          onPointerCancel={onStagePointerEnd}
         >
           {WORKS.map((p, i) => (
-            <div key={i} className="shrink-0 w-[46vw] sm:w-[420px] tilt-wrap">
-              <div className="tilt-inner">
-              <p className="text-xs tracking-widest uppercase text-zinc-300 mb-2 px-1">
-                {p.name}
-              </p>
-
-              {/* clicking anywhere on the card opens the details overlay */}
-              <div
-                role="button"
-                tabIndex={0}
-                aria-label={`Open details for ${p.name}`}
-                onClick={() => openDetails(p)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    openDetails(p);
-                  }
-                }}
-                className="group relative h-[58vh] max-h-[560px] overflow-hidden bg-[#2C2F34] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#4FA3D1]"
-              >
-                {p.image ? (
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-xl atma-semibold text-[#E4572E] text-center px-4">
-                      COMING SOON
-                    </span>
-                  </div>
-                )}
-
-                {/* top bar: the work's own logo (left), my logo (right, same
-                    40px box the redirect icon used). A soft dark fade keeps
-                    both readable on bright screenshots. Purely decorative,
-                    so it ignores clicks and they fall through to the card. */}
-                <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-3 pb-10 bg-gradient-to-b from-black/45 to-transparent">
-                  <img
-                    src={p.appLogo}
-                    alt={`${p.name} logo`}
-                    className="h-10 w-10 rounded-[10px] object-cover "
-                  />
-                  <div className="flex h-10 w-10 items-center justify-center">
+            <div
+              key={i}
+              ref={(el) => { cardRefs.current[i] = el; }}
+              className="absolute left-1/2 top-1/2"
+              style={{ willChange: "transform, filter, opacity" }}
+            >
+              <div className="tilt-wrap">
+                <div className="tilt-inner">
+                <div
+                  ref={(el) => { faceRefs.current[i] = el; }}
+                  role="button"
+                  tabIndex={focusIndex === i ? 0 : -1}
+                  aria-label={focusIndex === i ? `Open details for ${p.name}` : `Show ${p.name}`}
+                  onClick={() => activateCard(i)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      activateCard(i);
+                    }
+                  }}
+                  className="group relative w-full overflow-hidden bg-[#2C2F34] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#4FA3D1]"
+                >
+                  {p.image ? (
                     <img
-                      src={MY_LOGO}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-7 w-7 object-contain select-none"
+                      ref={(el) => {
+                        imgRefs.current[i] = el;
+                        if (el && el.complete && el.naturalWidth) natRefs.current[i] = { w: el.naturalWidth, h: el.naturalHeight };
+                      }}
+                      onLoad={(ev) => { natRefs.current[i] = { w: ev.currentTarget.naturalWidth, h: ev.currentTarget.naturalHeight }; }}
+                      src={p.image}
+                      alt={p.name}
+                      draggable={false}
+                      className="absolute left-0 top-0 object-cover will-change-transform"
+                      /* sized and moved every frame by renderStage() once the picture's own
+                         size is known; max-width none, or Tailwind's img reset would stop it
+                         being wider than the card */
+                      style={{ transformOrigin: "0 0", width: "100%", height: "100%", maxWidth: "none" }}
                     />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-xl atma-semibold text-[#E4572E] text-center px-4">
+                        COMING SOON
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-3 pb-10 bg-gradient-to-b from-black/45 to-transparent">
+                    <img
+                      src={p.appLogo}
+                      alt={`${p.name} logo`}
+                      draggable={false}
+                      className="h-10 w-10 rounded-[10px] object-cover "
+                    />
+                    <div className="flex h-10 w-10 items-center justify-center">
+                      <img
+                        src={MY_LOGO}
+                        alt=""
+                        aria-hidden="true"
+                        draggable={false}
+                        className="h-7 w-7 object-contain select-none"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        {!atEnd && (
-          <button
-            onClick={() => scrollByPage(1)}
-            aria-label="Next work"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center"
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M9 6l6 6-6 6" />
-            </svg>
-          </button>
-        )}
+        {/* Phones (under 900px): no slider. The arrows sit under the cards and the section
+            words come under the arrows (the left column itself is hidden on phones).
+            Both are hidden by CSS from 900px up. */}
+        <div className="works-arrows-mobile px-6 pt-5">
+          <WorksArrows
+            onPrev={() => step(-1)}
+            onNext={() => step(1)}
+          />
+        </div>
+        <SectionSide
+          section="works"
+          phone
+          counter={{
+            n: focusIndex + 1,
+            total: COUNT,
+            name: WORKS[focusIndex].image ? WORKS[focusIndex].name : "",
+          }}
+        />
       </div>
       </div>
 
-      {/* custom scrubber replacing the native scrollbar entirely: cold blue
-          (left) to hot orange (right). A plain div + drag handlers, not a
-          native <input>, so nothing here can ever show the OS cursor. */}
+      {/* custom scrubber, blue (left) to orange (right). Captures the pointer while
+          pressed, so releasing it can never be missed. */}
       <div
         ref={sliderRef}
-        onMouseDown={(e) => {
+        onPointerDown={(ev) => {
+          if (ev.pointerType === "mouse" && ev.button !== 0) return;
+          ev.preventDefault();
           dragging.current = true;
-          setFromClientX(e.clientX);
+          sliderRef.current.setPointerCapture(ev.pointerId);
+          setFromClientX(ev.clientX);
         }}
-        onTouchStart={(e) => {
-          dragging.current = true;
-          setFromClientX(e.touches[0].clientX);
+        onPointerMove={(ev) => {
+          if (!dragging.current) return;
+          if (ev.pointerType === "mouse" && ev.buttons === 0) return releaseDial();
+          setFromClientX(ev.clientX);
         }}
-        className="relative mx-auto mt-4 h-3 w-72 max-w-[85vw] rounded-full touch-none section-side-scrubber"
+        onPointerUp={releaseDial}
+        onPointerCancel={releaseDial}
+        onLostPointerCapture={releaseDial}
+        onDragStart={(ev) => ev.preventDefault()}
+        className="works-dial relative mx-auto mt-4 h-3 w-72 max-w-[85vw] rounded-full touch-none select-none section-side-scrubber"
         style={{ background: "linear-gradient(to right, #4FA3D1, #E4572E)" }}
       >
         <div
@@ -606,8 +939,6 @@ export default function Works(props) {
         />
       </div>
 
-      {/* rendered into document.body so the overlay covers the whole page and
-          isn't affected by this section's transforms / z-index */}
       {typeof document !== "undefined" &&
         createPortal(
           <AnimatePresence>

@@ -59,3 +59,42 @@
 /* ----- scroll-linked unscramble (SectionSide.jsx) ----- */
 .ss-word { display: inline-block; white-space: nowrap; }
 .ss-char { display: inline-block; white-space: pre; will-change: transform; }
+/* ----- anything passed as children (Works' arrow buttons), under the words ----- */
+/* Taken out of the flow (absolute, just under the words) so the words + the big number behind
+   them stay centred on each other, and the arrows can be placed freely.
+   Lower / raise the arrows with --works-arrows-gap. */
+.section-side-extra { position: absolute; left: 0; top: 100%; margin-top: var(--works-arrows-gap, 6.5rem); }
+
+/* the project counter above the label: "01 / 05  DUETDAYS" (Works).
+   Also out of the flow, sitting just above the label. */
+.section-side-counter {
+  position: absolute; left: 0; bottom: 100%; margin-bottom: 1.25rem; white-space: nowrap;
+  font-family: "Bebas Neue", sans-serif; line-height: 1;
+}
+.ssc-fade { display: flex; align-items: baseline; animation: ssc-in 0.45s ease both; }
+.ssc-num { font-size: clamp(2.6rem, 4.2vw, 4.6rem); color: #ededf2; letter-spacing: 0.02em; }
+.ssc-sep { font-size: clamp(2rem, 3vw, 3.2rem); color: rgba(237, 237, 242, 0.35); margin: 0 0.3em; }
+.ssc-total { font-size: clamp(1.4rem, 2vw, 2.2rem); color: rgba(237, 237, 242, 0.45); letter-spacing: 0.04em; }
+.ssc-name { margin-left: 1rem; font-size: 1.15rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(237, 237, 242, 0.85); }
+@keyframes ssc-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ssc-fade { animation: none; } }
+
+/* the carousel stage: tall on desktop; on phones only as tall as the focused card + float room */
+.works-stage { height: calc(min(50vh, 440px) + var(--stage-extra, 8rem)); }
+/* phones: the side column is hidden, so Works keeps a copy of the arrows on its stage */
+@media (min-width: 900px) {
+  .works-arrows-mobile { display: none; }
+}
+
+/* ----- phones (under 900px): Works has no slider; the arrows, then the words under them,
+   with the big number behind them on the right ----- */
+@media (max-width: 899.98px) {
+  .works-dial { display: none; }
+  .section-side--works-phone { display: block; padding: 0.75rem 1.5rem 0; }
+  .section-side--works-phone .section-side-num { left: auto; right: -0.04em; }
+  .section-side--works-phone .section-side-counter { position: static; margin-bottom: 0.6rem; }
+  .section-side--works-phone .section-side-label { margin-bottom: 0.5rem; }
+  .section-side--works-phone .ssc-num { font-size: 2.4rem; }
+  .works-arrows-mobile.works-arrows-mobile { padding-top: 0.5rem; }
+  .works-stage { height: calc(var(--works-card-h, 11rem) + 4rem); }
+}
