@@ -85,7 +85,7 @@ const RAINBOW = ["#8b5cff", "#3b82ff", "#22d3ee", "#34d399", "#facc15", "#fb923c
 const cy = LINE_Y - BAND_TOP + BAND_H / 2
 const SKEW = `translate(0 ${cy}) skewX(${SLANT}) translate(0 ${-cy})`
 
-export default function Intro({ onDone, onVanish }) {
+export default function Intro({ onDone, onVanish, preload }) {
   const rootRef = useRef(null)
   const stageRef = useRef(null)
   const whiteLayerRef = useRef(null)
@@ -97,6 +97,8 @@ export default function Intro({ onDone, onVanish }) {
   doneRef.current = onDone
   const vanishRef = useRef(onVanish)
   vanishRef.current = onVanish
+  const preloadRef = useRef(preload)
+  preloadRef.current = preload
   const animsRef = useRef([]) // compositor (WAAPI) animations for the vanish
 
   const speedUp = () => {
@@ -115,6 +117,11 @@ export default function Intro({ onDone, onVanish }) {
 
     const build = () => {
       if (cancelled || !stageRef.current) return
+      // The pen is about to move: start warming the cache for the site behind us (images, hero video).
+      // It resolves when everything is in, or after a hard cap, and never rejects.
+      const ready = preloadRef.current ? preloadRef.current() : Promise.resolve()
+      let isReady = false
+      ready.then(() => { isReady = true }, () => { isReady = true })
       ctx = gsap.context(() => {
         // While the intro plays, a long frame (page finishing loading, GC,
         // video decode) must NOT make the animation jump ahead to "catch up".
@@ -193,6 +200,19 @@ export default function Intro({ onDone, onVanish }) {
 
         // the vanish starts HOLD_AFTER seconds after the last letter
         tl.addLabel("vanish", writeDur + HOLD_AFTER)
+
+        // If the site's pictures / hero video are not in yet when the line is finished, hold here
+        // (the finished signature just stays on screen) and carry on the moment they are.
+        tl.call(
+          () => {
+            if (isReady) return
+            tl.pause()
+            const resume = () => { if (!cancelled) tl.play() }
+            ready.then(resume, resume)
+          },
+          null,
+          writeDur + HOLD_AFTER - 0.05
+        )
 
         // UNSIGN: the dash slides on past the end, so the stroke is erased
         // from its starting tip onward - in the order it was drawn.

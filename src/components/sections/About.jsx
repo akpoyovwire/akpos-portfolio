@@ -4,6 +4,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { SplitText } from "gsap/SplitText"
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
+// the phone's address bar sliding in/out resizes the window; without this the pin re-measures and jumps
+ScrollTrigger.config({ ignoreMobileResize: true })
 
 /*
   About
@@ -96,6 +98,10 @@ export default function About() {
 
     const setup = () => {
       if (cancelled) return
+      // touch screens: a gentle follow instead of a hard 1:1 scrub, a shorter pin, and no stop-and-glide snap
+      // inside the pin (that stop-and-glide is what made flicking feel sticky). Flip TOUCH_SNAP to bring it back.
+      const coarse = window.matchMedia("(pointer: coarse)").matches
+      const TOUCH_SNAP = false
 
       ctx = gsap.context(() => {
         const headingSplits = headingRefs.current.map(
@@ -147,8 +153,8 @@ export default function About() {
             // - which is exactly the gap between About and Tools. Deriving
             // "end" from the pin's own duration and nothing else removes that
             // second, conflicting source of height entirely.
-            end: () => `+=${(PARTS.length - 1) * window.innerHeight}`,
-            scrub: true,
+            end: () => `+=${(PARTS.length - 1) * window.innerHeight * (coarse ? 0.75 : 1)}`,
+            scrub: coarse ? 0.5 : true,
             pin: stageRef.current,
             invalidateOnRefresh: true, // recompute "end" correctly on resize/refresh
             // Once the user stops scrolling, glide to the nearest "settled"
@@ -159,7 +165,7 @@ export default function About() {
             // `tl` is still empty (0 duration). By the time GSAP actually
             // calls this function (only once the user stops scrolling), the
             // closure sees the finished timeline.
-            snap: {
+            snap: coarse && !TOUCH_SNAP ? false : {
               snapTo: (progress) => {
                 const dur = tl.duration()
                 if (!dur) return progress
@@ -278,9 +284,9 @@ export default function About() {
       className="relative z-10"
     >
       <div ref={stageRef} className="h-screen w-full overflow-hidden flex items-center">
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-12 px-6 items-center">
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-5 md:gap-12 px-5 md:px-6 items-center">
           {/* IMAGE COLUMN */}
-          <div className="relative aspect-[5/4] w-full overflow-hidden rounded-2xl bg-[#2C2F34]">
+          <div className="relative aspect-[16/9] md:aspect-[5/4] w-full overflow-hidden rounded-2xl bg-[#2C2F34]">
             {PARTS.map((p, i) => (
               <div key={p.id} ref={(el) => (imageRefs.current[i] = el)} className="absolute inset-0">
                 <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
@@ -304,7 +310,7 @@ export default function About() {
           {/* TEXT COLUMN */}
           <div className="relative">
             {/* progress rail: one tick per part, fills in as you reach it */}
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-3 md:mb-6">
               {PARTS.map((p, i) => (
                 <span key={p.id} className="h-[3px] w-8 rounded-full bg-white/20 overflow-hidden">
                   <span
@@ -315,9 +321,9 @@ export default function About() {
               ))}
             </div>
 
-            <div className="relative min-h-[320px]">
+            <div className="grid md:min-h-[320px]">
               {PARTS.map((p, i) => (
-                <div key={p.id} className="absolute inset-0 flex flex-col justify-center">
+                <div key={p.id} className="col-start-1 row-start-1 flex flex-col justify-center">
                   <h3
                     ref={(el) => (headingRefs.current[i] = el)}
                     className="text-3xl md:text-5xl bebas-neue-regular text-zinc-100 mb-5 overflow-hidden"
@@ -326,7 +332,7 @@ export default function About() {
                   </h3>
                   <p
                     ref={(el) => (paraRefs.current[i] = el)}
-                    className="text-zinc-200 leading-relaxed max-w-md"
+                    className="text-zinc-200 leading-relaxed max-w-md text-[0.92rem] md:text-base"
                   >
                     {p.body}
                   </p>

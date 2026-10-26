@@ -1,3 +1,4 @@
+import { worksCovering } from "../../utils/scrollMetrics"
 import React, { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion"
 import SectionSide from "./SectionSide"
@@ -361,10 +362,7 @@ const REST = { scale: 1, rotate: 0, filter: REST_FILTER }
   down off it), so onViewportEnter can't fire. Instead we watch the Works layer
   itself: while its top edge is above the bottom of the screen it is covering
   Expertise; the moment it slides fully away, Expertise is revealed again. */
-const worksCovering = () => {
-  const el = document.querySelector('[data-section="works"]')
-  return !!el && el.getBoundingClientRect().top < window.innerHeight - 4
-}
+// worksCovering() now comes from utils/scrollMetrics (a cached number instead of a layout read on every scroll event)
 
 function IconButton({ exp, open, small = false, pulsing = false, cancelTick = 0, onClick }) {
   const controls = useAnimationControls()
@@ -554,6 +552,8 @@ export default function Expertise(props) {
     >
       {/* text on the left; fades away while a discipline is open */}
       <SectionSide section="expertise" hidden={Boolean(current)} variants={props.sectionFade} />
+      {/* phones / tablets: the same words, at the bottom of the section */}
+      <SectionSide section="expertise" phone hidden={Boolean(current)} />
 
       {/* LEFT COLUMN: every discipline except the open one */}
       {current && (

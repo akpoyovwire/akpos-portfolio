@@ -77,13 +77,11 @@
   flex: none;
   align-items: center;
   gap: 0.6rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
 }
 .mon-ia-logo {
   flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.4rem;
+  height: 1.4rem;
   object-fit: contain;
 }
 .mon-ia-heading {
@@ -100,7 +98,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  margin-left: auto;
   font-size: 0.8125rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -117,6 +114,9 @@
 @keyframes mon-ia-pulse {
   50% { opacity: 0.45; }
 }
+/* with a heading ("Let's talk") the status sits on the right; without one it sits next to the logo */
+.mon-ia-heading ~ .mon-ia-status { margin-left: auto; }
+.mon-ia-head--plain .mon-ia-status { margin-left: auto; }
 .mon-ia-iconbtn {
   display: inline-flex;
   flex: none;
@@ -276,17 +276,17 @@
   font-size: 1rem;
   line-height: 1.4;
   text-align: left;
-  color: #f4f4f5;
+  color: #a1a1aa;
   text-decoration: underline;
-  text-decoration-color: rgba(255, 255, 255, 0.4);
+  text-decoration-color: rgba(161, 161, 170, 0.4);
   text-underline-offset: 0.25em;
   background: none;
   border: 0;
   touch-action: manipulation;
 }
 .mon-ia-chip:hover {
-  color: #8cc8e6;
-  text-decoration-color: #8cc8e6;
+  color: #e4e4e7;
+  text-decoration-color: #e4e4e7;
 }
 
 /* "Thinking…" bubble: the phrase changes while Mon IA works */
@@ -404,10 +404,13 @@
 @media (max-height: 700px) {
   .mon-ia { gap: 0.5rem; padding: 0.75rem 1rem 0.7rem; }
   .mon-ia-heading { font-size: 1.5rem; }
-  .mon-ia-head { padding-bottom: 0.5rem; }
 }
 /* tablets and phones: the card fills the width under the name */
 @media (max-width: 899px) {
+  /* the card hangs from the top, so when the keyboard shrinks it (MonIAChat.jsx) the top stays put */
+  .activity-game-main:has(> .mon-ia-stage) { justify-content: flex-start; }
+  /* two big blurred blobs drifting forever behind a blurred card = constant repaints on a phone */
+  .mon-ia-stage::before, .mon-ia-stage::after { animation: none; }
   .mon-ia-stage { max-height: none; max-width: 30rem; }
   .mon-ia-stage::before { left: -1rem; }
   .mon-ia-stage::after { right: -1rem; }
@@ -415,11 +418,16 @@
 @media (max-width: 639px) {
   .mon-ia-stage { max-width: none; }
   .mon-ia { padding: 0.75rem 0.85rem 0.7rem; border-radius: 1.25rem; }
-  .mon-ia-status { display: none; }
-  .mon-ia-iconbtn:first-of-type { margin-left: auto; }
   .mon-ia-new-label { display: none; }
   .mon-ia-msg { max-width: 96%; }
-  .mon-ia-send { padding: 0 1.1rem; }
+  .mon-ia-bubble { font-size: 0.9375rem; }
+  .mon-ia-log { gap: 0.75rem; }
+  .mon-ia-suggestions { gap: 0.45rem; }
+  .mon-ia-chip { font-size: 0.9375rem; }
+  .mon-ia-input { min-height: 2.75rem; font-size: 16px; } /* 16px: iPhones zoom the page in on smaller text */
+  .mon-ia-send { min-height: 2.75rem; padding: 0 1.1rem; }
+  .mon-ia-consent { font-size: 0.6875rem; }
+
 }
 @media (prefers-reduced-motion: reduce) {
   .mon-ia-stage::before, .mon-ia-stage::after, .mon-ia-dot { animation: none; }

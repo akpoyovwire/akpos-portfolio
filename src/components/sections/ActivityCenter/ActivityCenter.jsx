@@ -136,6 +136,9 @@ export default function ActivityCenter({ sectionFade = DEFAULT_FADE }) {
         <div ref={c.knobRef} className="activity-center-scrubber-knob" />
       </div>
 
+      {/* phones: the words and the big number under the cards (the side column is hidden under 900px) */}
+      <SectionSide section="activity" phone />
+
       <AnimatePresence>{open && <Modal key={open.id} activity={open} onClose={close} />}</AnimatePresence>
     </motion.section>
   );

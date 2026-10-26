@@ -183,7 +183,7 @@ export default function Hero(){
   initial="hidden"
   animate="visible"
     style={{ minHeight: "100vh" }}
-  className="relative px-6 py-48 text-center flex flex-col items-center justify-center overflow-hidden"
+  className="relative px-5 sm:px-6 py-28 md:py-48 text-center flex flex-col items-center justify-center overflow-hidden"
 >
  
      {/* VIDEO BACKGROUND with water ripples */}
@@ -197,10 +197,10 @@ export default function Hero(){
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Akpoyovwire on LinkedIn"
-    className="absolute bottom-6 left-6 z-10 block"
+    className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-10 block"
     whileTap={{ scale: 0.92 }}
   >
-   <div className="hero-pulse w-20 h-20 md:w-28 md:h-28 cursor-pointer">
+   <div className="hero-pulse w-16 h-16 md:w-28 md:h-28 cursor-pointer">
   {unfolded ? (
     <img
       src={PROFILE_SRC}
@@ -262,13 +262,13 @@ export default function Hero(){
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: 2, duration: 1 }}
-className="text-lg relative text-[#EDEDF2] mb-12 bebas-neue-regular -mt-5"
+className="text-base sm:text-lg relative text-[#EDEDF2] mb-8 md:mb-12 bebas-neue-regular -mt-5"
   >
     Build. Secure. Innovate. Educate.
   </motion.p>
 
   {/* Floating Contact Icons with entrance */}
-  <motion.div className="flex gap-6">
+  <motion.div className="flex gap-5 md:gap-6">
     {[
       {
         icon: <Mail size={20} color="#D14836" />,

@@ -1,5 +1,7 @@
 {
   "crons": [
     { "path": "/api/cron/mon-ia-digest", "schedule": "0 7 * * 1" }
-  ]
+  ],
+  "headers": [{ "source": "/(images|videos|logos|icons|map)/(.*)",
+  "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] }]
 }

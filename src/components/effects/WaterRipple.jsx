@@ -352,6 +352,23 @@ export default function WaterRipple({ src, type = "video" }) {
     }
   }, [type])
 
+  // A video that is scrolled out of view still decodes every frame unless told to stop.
+  // Pause it once the hero has left the screen, play again when it comes back.
+  useEffect(() => {
+    if (type !== "video") return
+    const v = mediaRef.current
+    if (!v) return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) v.play().catch(() => {})
+        else v.pause()
+      },
+      { threshold: 0 }
+    )
+    io.observe(v)
+    return () => io.disconnect()
+  }, [type])
+
   return (
     <>
       {type === "image" ? (

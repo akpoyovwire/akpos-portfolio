@@ -38,7 +38,7 @@ const SCRAMBLE = {
   readableAt: 0.7,    // fully readable once its centre has risen to this height
   leaveAt: 0.4,       // scrambles again once its centre rises above this height (going out the top)
   coverDone: 0.6,     // fully scrambled once the next section has covered this much of the way (0-1)
-  glide: 0.14,        // 0-1 catch-up per frame (lower = floatier, 1 = locked to the scrollbar)
+  glide: 0.22,        // 0-1 catch-up per frame (lower = floatier, 1 = locked to the scrollbar)
   flyers: 0.22,       // share of letters that also drift / tilt / blur
   spread: 0.4,        // 0-1: how staggered the letters are as they settle
 };
@@ -56,20 +56,38 @@ const DIM_MAX = 0.45;
 // then all the animating (writes), so three instances never cause layout thrashing, and the
 // loop is removed from GSAP's ticker when none are mounted.
 const instances = new Set();
+// The page height is measured only when it can change (resize / content growth), never per frame:
+// reading scrollHeight every frame forced the browser to re-layout the page 60 times a second.
+let maxScrollCache = 0;
+let sizeObserver = null;
+const refreshMax = () => {
+  maxScrollCache = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  instances.forEach((i) => i.markDirty());
+};
 function loop() {
   const vh = window.innerHeight;
-  const maxScroll = document.documentElement.scrollHeight - vh;
   const scrollY = window.scrollY;
-  instances.forEach((i) => i.measure(vh, maxScroll, scrollY));
+  instances.forEach((i) => i.measure(vh, maxScrollCache, scrollY));
   instances.forEach((i) => i.apply());
 }
 function register(inst) {
-  if (!instances.size) gsap.ticker.add(loop);
+  if (!instances.size) {
+    refreshMax();
+    sizeObserver = new ResizeObserver(refreshMax);
+    sizeObserver.observe(document.body);
+    window.addEventListener("resize", refreshMax);
+    gsap.ticker.add(loop);
+  }
   instances.add(inst);
 }
 function unregister(inst) {
   instances.delete(inst);
-  if (!instances.size) gsap.ticker.remove(loop);
+  if (!instances.size) {
+    gsap.ticker.remove(loop);
+    sizeObserver?.disconnect();
+    sizeObserver = null;
+    window.removeEventListener("resize", refreshMax);
+  }
 }
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -107,12 +125,29 @@ export default function SectionSide({ section, hidden = false, phone = false, co
     let dead = false;
     let want = 0; // where the block should be: 0 scrambled .. 1 readable
     let cur = 0;  // where it is now (glides toward `want`)
+    let near = true;      // is the block anywhere near the screen? (IntersectionObserver, no layout reads)
+    let dirty = true;     // something changed that needs a fresh measurement
+    let lastY = -1;
+    let lastVh = -1;
+    let quiet = 0;        // frames since anything moved
+    let moving = false;   // letters are mid-glide: only then do they get their own GPU layers
     const parts = () => Array.from(root.querySelectorAll(".ss-char, .ss-line"));
     const clamp = (v) => Math.min(1, Math.max(0, v));
     const layer = root.closest("[data-section]");
 
     // READ phase. Where is the block, and is another section sliding over it?
     const measure = (vh, maxScroll, scrollY) => {
+      // nothing moved since the last frame: the answer is the same, so read nothing
+      // Keep re-measuring for ~0.4s after the scroll stops. The stacked layers (Framer) trail the scroll by a
+      // frame or two, and an instant jump (the footer / header links) would otherwise freeze a stale
+      // answer: the letters stayed scrambled after using a link.
+      if (dirty || scrollY !== lastY || vh !== lastVh) quiet = 0;
+      else if (++quiet > 24) return;
+      dirty = false;
+      lastY = scrollY;
+      lastVh = vh;
+      // far off screen (above or below) the letters are simply scrambled: no layout read needed
+      if (!near) { want = 0; return; }
       const S = phone ? SCRAMBLE_PHONE : SCRAMBLE;
       const r = root.getBoundingClientRect();
       const half = r.height / 2;
@@ -132,9 +167,20 @@ export default function SectionSide({ section, hidden = false, phone = false, co
       if (!tl) return;
       cur += (want - cur) * SCRAMBLE.glide;
       if (Math.abs(want - cur) < 0.0005) cur = want;
+      const nowMoving = cur !== want;
+      if (nowMoving !== moving) {
+        moving = nowMoving;
+        root.classList.toggle("is-moving", moving); // will-change lives on this class only
+      }
       if (Math.abs(tl.progress() - cur) > 0.0002) tl.progress(cur);
     };
-    const inst = { measure, apply };
+    const inst = { measure, apply, markDirty: () => { dirty = true; } };
+
+    const io = new IntersectionObserver(
+      ([entry]) => { near = entry.isIntersecting; dirty = true; },
+      { rootMargin: "35% 0px 35% 0px" }
+    );
+    io.observe(root);
 
     const teardown = () => {
       unregister(inst);
@@ -188,7 +234,8 @@ export default function SectionSide({ section, hidden = false, phone = false, co
         });
       });
 
-      measure(window.innerHeight, document.documentElement.scrollHeight - window.innerHeight, window.scrollY);
+      dirty = true;
+      measure(window.innerHeight, Math.max(0, document.documentElement.scrollHeight - window.innerHeight), window.scrollY);
       cur = want;
       tl.progress(cur);
       register(inst);
@@ -199,7 +246,7 @@ export default function SectionSide({ section, hidden = false, phone = false, co
     window.addEventListener("resize", onResize);
     // the page above can still change height (images, typed headings): re-sync once it settles
     let rt;
-    const ro = new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => { if (tl) { measure(window.innerHeight, document.documentElement.scrollHeight - window.innerHeight, window.scrollY); cur = want; } }, 150); });
+    const ro = new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => { if (tl) { dirty = true; measure(window.innerHeight, Math.max(0, document.documentElement.scrollHeight - window.innerHeight), window.scrollY); cur = want; } }, 150); });
     ro.observe(document.body);
     // measure after the web fonts (Bebas Neue / Voltaire) are in, or the slots are wrong
     (document.fonts?.ready ?? Promise.resolve()).then(build);
@@ -209,6 +256,7 @@ export default function SectionSide({ section, hidden = false, phone = false, co
       clearTimeout(timer);
       clearTimeout(rt);
       ro.disconnect();
+      io.disconnect();
       window.removeEventListener("resize", onResize);
       teardown();
     };

@@ -55,7 +55,7 @@ function ThinkingBubble() {
 }
 
 // The "Ask Away" chat card. onOpenPrivacy opens the Privacy Policy screen.
-export default function MonIAChat({ onOpenPrivacy }) {
+export default function MonIAChat({ onOpenPrivacy, title = null, suggestions = true }) {
   const [messages, setMessages] = useState([]); // [{ id, role: "user" | "assistant", content }]
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,6 +65,8 @@ export default function MonIAChat({ onOpenPrivacy }) {
   const counterRef = useRef(0);
   const logRef = useRef(null);
   const inputRef = useRef(null);
+  const stageRef = useRef(null);
+  const [typing, setTyping] = useState(false); // phone: the keyboard is (about to be) open
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -74,10 +76,36 @@ export default function MonIAChat({ onOpenPrivacy }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, loading, error]);
 
-  // put the cursor back in the box after each answer
+  // put the cursor back in the box after each answer - on a computer only. On a phone this would
+  // pop the keyboard open again every time an answer arrives.
   useEffect(() => {
-    if (!loading) inputRef.current?.focus({ preventScroll: true });
+    if (!loading && window.matchMedia("(pointer: fine)").matches) inputRef.current?.focus({ preventScroll: true });
   }, [loading]);
+
+  // Phone keyboard: the card is shrunk to exactly the room between its top and the keyboard, using the
+  // visual viewport (the part of the screen that is really visible). Without this the bottom of the card,
+  // with the box you are typing in, sits hidden behind the keyboard on iPhones.
+  useEffect(() => {
+    const stage = stageRef.current;
+    const vv = window.visualViewport;
+    if (!stage || !vv) return undefined;
+    const phone = window.matchMedia("(max-width: 899px)");
+    const fit = () => {
+      if (!phone.matches || !typing) { stage.style.maxHeight = ""; return; }
+      const top = stage.getBoundingClientRect().top;
+      stage.style.maxHeight = `${Math.max(220, vv.offsetTop + vv.height - top - 8)}px`;
+    };
+    fit();
+    const t = setTimeout(fit, 300); // the keyboard slides in; measure again when it has landed
+    vv.addEventListener("resize", fit);
+    vv.addEventListener("scroll", fit);
+    return () => {
+      clearTimeout(t);
+      vv.removeEventListener("resize", fit);
+      vv.removeEventListener("scroll", fit);
+      stage.style.maxHeight = "";
+    };
+  }, [typing]);
 
   const ask = async (history) => {
     abortRef.current?.abort();
@@ -133,16 +161,18 @@ export default function MonIAChat({ onOpenPrivacy }) {
   const lastIsUser = messages.length > 0 && messages[messages.length - 1].role === "user";
 
   return (
-    <div className="mon-ia-stage">
-      <section className="mon-ia" aria-labelledby="mon-ia-heading">
-        <header className="mon-ia-head">
+    <div ref={stageRef} className={`mon-ia-stage${typing ? " is-typing" : ""}`}>
+      <section className="mon-ia" aria-labelledby={title ? "mon-ia-heading" : undefined} aria-label={title ? undefined : AI_NAME}>
+        <header className={`mon-ia-head${title ? "" : " mon-ia-head--plain"}`}>
           <img src={ACTIVITY_LOGO} alt="" aria-hidden="true" className="mon-ia-logo" />
-          <h3 id="mon-ia-heading" className="mon-ia-heading">
-            Ask Away
-          </h3>
+          {title && (
+            <h3 id="mon-ia-heading" className="mon-ia-heading">
+              {title}
+            </h3>
+          )}
           <span className="mon-ia-status">
             <span className="mon-ia-dot" aria-hidden="true" />
-            {AI_NAME} online
+            {AI_NAME}
           </span>
           {messages.length > 0 && (
             <button type="button" className="mon-ia-iconbtn mon-ia-new" onClick={newConversation} aria-label="New conversation" title="New conversation">
@@ -163,7 +193,7 @@ export default function MonIAChat({ onOpenPrivacy }) {
             </div>
           </div>
 
-          {messages.length === 0 && !loading && (
+          {suggestions && messages.length === 0 && !loading && (
             <ul className="mon-ia-suggestions" aria-label="Suggested questions">
               {SUGGESTIONS.map((q) => (
                 <li key={q}>
@@ -213,6 +243,11 @@ export default function MonIAChat({ onOpenPrivacy }) {
             maxLength={MAX_CHARS}
             placeholder="Ask about Akpos…"
             autoComplete="off"
+            autoCorrect="on"
+            autoCapitalize="sentences"
+            enterKeyHint="send"
+            onFocus={() => setTyping(true)}
+            onBlur={() => setTyping(false)}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.nativeEvent.isComposing) {
@@ -221,7 +256,13 @@ export default function MonIAChat({ onOpenPrivacy }) {
               }
             }}
           />
-          <button type="button" className="mon-ia-send" onClick={() => send(input)} disabled={loading || !input.trim()}>
+          <button
+            type="button"
+            className="mon-ia-send"
+            onPointerDown={(e) => e.preventDefault()} /* keep the keyboard open when you tap Submit */
+            onClick={() => send(input)}
+            disabled={loading || !input.trim()}
+          >
             Submit
           </button>
         </div>
@@ -231,7 +272,7 @@ export default function MonIAChat({ onOpenPrivacy }) {
           <button type="button" className="mon-ia-link" onClick={onOpenPrivacy}>
             Privacy Policy
           </button>
-          . Conversations are recorded and emailed to Akpos. Please don't share sensitive personal information.
+          .
         </p>
       </section>
     </div>

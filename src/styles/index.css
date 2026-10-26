@@ -11,6 +11,8 @@
 html, body {
   scroll-behavior: smooth;
   background-color: #1F1E24;
+  /* no rubber-band / pull-to-refresh at the ends of the page (the footer grows right at the end) */
+  overscroll-behavior-y: none;
 }
 
 body {

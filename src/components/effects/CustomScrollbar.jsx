@@ -62,15 +62,22 @@ export default function CustomScrollbar() {
     let grabOffset = THUMB_H / 2 // pointer's distance from the thumb's top while dragging
     let locked = false // true while a pop-up has the page locked
 
-    const maxScroll = () => Math.max(0, root.scrollHeight - window.innerHeight)
-    const travel = () => Math.max(1, hit.clientHeight - THUMB_H)
+    // measured only when the size can change; reading scrollHeight on every scroll event forced a re-layout each frame
+    let maxCache = 0
+    let travelCache = 1
+    const maxScroll = () => maxCache
+    const travel = () => travelCache
 
     const update = () => {
-      const max = maxScroll()
+      const p = maxCache ? clamp(window.scrollY / maxCache, 0, 1) : 0
+      thumb.style.transform = `translateY(${p * travelCache}px)`
+    }
+    const remeasure = () => {
+      maxCache = Math.max(0, root.scrollHeight - window.innerHeight)
       // nothing to scroll -> no scrollbar
-      hit.style.display = max <= 1 ? "none" : "block"
-      const p = max ? clamp(window.scrollY / max, 0, 1) : 0
-      thumb.style.transform = `translateY(${p * travel()}px)`
+      hit.style.display = maxCache <= 1 ? "none" : "block"
+      travelCache = Math.max(1, hit.clientHeight - THUMB_H)
+      update()
     }
 
     // fade in now; schedule the fade out unless the mouse is on it / dragging
@@ -165,17 +172,17 @@ export default function CustomScrollbar() {
     const unlock = () => {
       locked = false
       hit.style.pointerEvents = ""
-      update()
+      remeasure()
     }
     window.addEventListener("lenis:stop", lock)
     window.addEventListener("lenis:start", unlock)
 
     window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", update)
+    window.addEventListener("resize", remeasure)
     // page height changes as images load, pins are built, etc.
-    const ro = new ResizeObserver(update)
+    const ro = new ResizeObserver(remeasure)
     ro.observe(document.body)
-    update()
+    remeasure()
 
     return () => {
       clearTimeout(hideTimer)
@@ -188,7 +195,7 @@ export default function CustomScrollbar() {
       window.removeEventListener("lenis:stop", lock)
       window.removeEventListener("lenis:start", unlock)
       window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", update)
+      window.removeEventListener("resize", remeasure)
       ro.disconnect()
       root.removeAttribute("data-grabbing")
     }

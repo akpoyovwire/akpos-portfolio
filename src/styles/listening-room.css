@@ -123,28 +123,56 @@
   object-fit: contain; object-position: bottom; filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
 }
 
-/* ---------- phones ---------- */
+/* ---------- phones ----------
+   One clear card: artwork + title/artist on top (artist picture tucked in the corner), the description
+   under them across the FULL width (so "MORE" just makes the card taller), then the player.
+   .listening-room-info is display: contents, so its pieces become cells of the card's own grid. */
 @media (max-width: 720px) {
   .listening-room { padding-top: 3.5rem; }
-  .listening-room-track + .listening-room-track { margin-top: 26px; }
+  .listening-room-track + .listening-room-track { margin-top: 22px; }
   .listening-room-head { flex-wrap: wrap; gap: 8px 10px; }
   .listening-room-logo { width: 28px; }
   .listening-room-kicker, .listening-room-month, .listening-room-month-label { font-size: 12px; }
-  .listening-room-track { grid-template-columns: 92px minmax(0, 1fr); column-gap: 14px; min-height: 0; padding: 14px; border-radius: 20px; align-items: start; }
-  .listening-room-art { width: 92px; height: 92px; border-radius: 12px; }
-  .listening-room-info { padding-right: 78px; }
-  .listening-room-eyebrow { font-size: 11px; }
-  .listening-room-title { font-size: 25px; }
-  .listening-room-artist { font-size: 17px; }
-  .listening-room-about { max-width: none; }
-  .listening-room-commentary { font-size: 14px; }
-  .listening-room-player { margin-top: 12px; gap: 12px; }
-  .listening-room .listening-room-play { --btn-h: 44px; --icon: 24px; font-size: 16px; padding: 0 18px; }
+
+  .listening-room-track {
+    grid-template-columns: 5.25rem minmax(0, 1fr);
+    column-gap: 0.85rem;
+    row-gap: 0;
+    min-height: 0;
+    padding: 14px;
+    border-radius: 20px;
+    align-items: start;
+  }
+  .listening-room-art { grid-column: 1; grid-row: 1 / span 3; width: 5.25rem; height: 5.25rem; border-radius: 12px; }
+  .listening-room-info { display: contents; }
+
+  .listening-room-eyebrow,
+  .listening-room-title,
+  .listening-room-artist { grid-column: 2; position: relative; z-index: 1; }
+  .listening-room-eyebrow { grid-row: 1; font-size: 11px; margin: 0 0 2px; }
+  .listening-room-title { grid-row: 2; font-size: 22px; line-height: 1.05; }
+  .listening-room-artist { grid-row: 3; font-size: 15px; margin-top: 3px; }
+
+  .listening-room-about { grid-column: 1 / -1; grid-row: 4; max-width: none; margin-top: 12px; padding-right: 5.75rem; position: relative; z-index: 1; }
+  .listening-room-commentary { font-size: 14px; line-height: 1.45; }
+  .listening-room-more { font-size: 12px; padding: 6px 0 2px; }
+
+  .listening-room-player,
+  .listening-room-nosnippet { grid-column: 1 / -1; grid-row: 5; margin-top: 12px; padding-right: 5.75rem; position: relative; z-index: 1; }
+  .listening-room-player { gap: 12px; }
+  .listening-room .listening-room-play { --btn-h: 44px; --icon: 22px; font-size: 16px; padding: 0 18px; }
   .listening-room-play-label { margin-left: 8px; }
-  .listening-room-scrub { max-width: none; gap: 10px; }
-  .listening-room-end { position: absolute; top: 0; right: 0; bottom: 0; margin: 0; width: 96px; clip-path: inset(-30px 0 0 0 round 0 0 20px 0); }
+  .listening-room-scrub { max-width: none; gap: 10px; flex: 1 1 8rem; }
+
+  /* the artist's picture: bottom-right corner of the card (as before) */
+  .listening-room-end {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    grid-column: auto; grid-row: auto;
+    width: 96px; margin: 0;
+    clip-path: inset(-30px 0 0 0 round 0 0 20px 0);
+  }
   .listening-room-end-name { display: none; }
-  .listening-room-cutout { height: 120px; max-width: 96px; position: absolute; right: 0; bottom: 0; }
+  .listening-room-cutout { height: 120px; max-width: 96px; width: auto; position: absolute; right: 0; bottom: 0; }
 }
 
 @media (max-width: 899px) {

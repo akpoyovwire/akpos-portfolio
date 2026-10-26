@@ -9,6 +9,7 @@ import "../../styles/header-nav.css"
 const ORANGE = "#E4572E"
 const BLUE = "#4A78A3"
 const BLACK = "#1F1E24"
+const BOX = "rgba(31, 30, 36, 0.82)" // the hover colour of a link AND of its info box: one colour
 
 const SPIN = 1.1 // seconds: colour change and the label spin run together
 
@@ -133,7 +134,7 @@ function BarItem({ item, index, hovered, setHovered }) {
         initial={false}
         animate={{
           backgroundColor: isHover
-            ? ["rgba(228,87,46,0)", ORANGE, BLUE, BLACK]
+            ? ["rgba(228,87,46,0)", ORANGE, BLUE, BOX]
             : "rgba(31,30,36,0)",
         }}
         transition={
@@ -297,8 +298,8 @@ export default function Header() {
   return (
     <>
       {/* Logo: unchanged, scrolls away with the hero */}
-      <div className="p-6 absolute top-0 left-0 w-full z-10 bg-transparent pointer-events-none">
-        <h1 className="w-64 md:w-80">
+      <div className="p-4 sm:p-6 absolute top-0 left-0 w-full z-10 bg-transparent pointer-events-none">
+        <h1 className="w-48 sm:w-64 md:w-80">
           <svg
             viewBox="10 10 310 85"
             className="w-full h-auto overflow-visible"

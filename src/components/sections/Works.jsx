@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { stackProgress } from "../../utils/scrollMetrics";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
@@ -500,7 +501,8 @@ export default function Works(props) {
     const e = eng.current;
     const p = e.pos.p;
     if (knobRef.current) {
-      knobRef.current.style.left = `calc(${ratioFromPosition(p, COUNT) * 100}% - 8px)`;
+      const kl = `calc(${ratioFromPosition(p, COUNT) * 100}% - 8px)`;
+      if (e.knobLeft !== kl) { knobRef.current.style.left = kl; e.knobLeft = kl; }
     }
     const focus = nearestIndex(p, COUNT);
     if (focus !== e.flags.focus) { e.flags.focus = focus; setFocusIndex(focus); }
@@ -535,7 +537,8 @@ export default function Works(props) {
     const frame = (time) => {
       const dt = Math.min(0.1, Math.max(0, time - e.t));
       e.t = time;
-      if (!e.visible) return;
+      // off screen, or fully covered by the Activity Center sliding over it: draw nothing
+      if (!e.visible || stackProgress() > 0.675) return;
       if (e.glide) {
         const k = 1 - Math.pow(1 - WHEEL_GLIDE, dt * 60);
         e.pos.p += (e.glideTarget - e.pos.p) * k;

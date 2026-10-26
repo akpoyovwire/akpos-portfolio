@@ -1,4 +1,5 @@
 // npm run add-track -- <spotify track link>
+// npm run add-track -- <spotify track link> --goodbye   (sets the footer's goodbye song instead of a top-five entry)
 // Pulls title + artwork from Spotify oEmbed (no account, no key) and artist name + artist
 // photo from Deezer's public search (no key). You confirm or correct everything.
 // Anything that fails falls back to typing it in. Nothing here downloads audio:
@@ -15,6 +16,10 @@ import {
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataFile = path.join(root, "src/data/listeningRoom.json");
+const goodbyeFile = path.join(root, "src/data/goodbyeSong.json");
+const argv = process.argv.slice(2);
+const goodbye = argv.includes("--goodbye");
+const linkArg = argv.find((a) => !a.startsWith("--"));
 const rl = readline.createInterface({ input, output });
 const ask = async (q, def = "") => ((await rl.question(def ? `${q} [${def}]: ` : `${q}: `)).trim() || def);
 
@@ -41,8 +46,23 @@ async function saveImage(url, destRel) {
   }
 }
 
+// Copies + validates YOUR clip into public/audio. Returns the public path, or null if skipped.
+async function copyClip(slug) {
+  const clip = (await ask("Path to YOUR clip (.mp3 or .m4a, max 60 s, max 2 MB; Enter to skip)")).replace(/^["']|["']$/g, "");
+  if (!clip) return null;
+  const ext = path.extname(clip).toLowerCase();
+  if (!AUDIO_EXT.includes(ext)) throw new Error(`Clip must be ${AUDIO_EXT.join(" or ")}.`);
+  if (!fs.existsSync(clip)) throw new Error("Clip file not found.");
+  const problems = await checkAudioFile(path.basename(clip), fs.statSync(clip).size, defaultReadDuration, clip);
+  if (problems.length) throw new Error(problems.join("\n"));
+  fs.mkdirSync(path.join(root, "public/audio"), { recursive: true });
+  fs.copyFileSync(clip, path.join(root, "public/audio", `${slug}${ext}`));
+  console.log(`  clip OK -> public/audio/${slug}${ext}`);
+  return `/audio/${slug}${ext}`;
+}
+
 try {
-  const link = parseSpotifyTrackUrl(process.argv[2] || (await ask("Spotify track link")));
+  const link = parseSpotifyTrackUrl(linkArg || (await ask("Spotify track link")));
   if (!link) throw new Error("That is not a Spotify track link (expected https://open.spotify.com/track/...).");
 
   // 1) Spotify oEmbed: title + artwork. Falls back to manual.
@@ -81,43 +101,51 @@ try {
   title = await ask("Title", title);
   artist = await ask("Artist", artist);
   if (!title || !artist) throw new Error("Title and artist are required.");
-  const commentary = await ask("Why is it in your top five? (one line; you can edit the JSON later)");
+  if (goodbye) {
+    // ---- footer goodbye song: one entry, replaced every time, old files cleaned up ----
+    const slug = `goodbye-${slugify(title)}`;
+    const audio = await copyClip(slug);
+    if (!audio) console.log("  no clip: the player shows \"Clip coming soon\" until you add one.");
+    const art = spotifyArt || deezerCover;
+    const artwork = art ? await saveImage(art, `/images/goodbye/${slug}-art.jpg`) : null;
 
-  const data = JSON.parse(fs.readFileSync(dataFile, "utf8"));
-  const now = new Date();
-  const month = await ask("Month (YYYY-MM)", `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error("Month must look like 2026-10.");
-  const free = nextFreePosition(data.tracks, month);
-  const position = Number(await ask(`Position 1-${TRACKS_PER_MONTH}`, free ? String(free) : "1"));
-  if (!Number.isInteger(position) || position < 1 || position > TRACKS_PER_MONTH) throw new Error("Bad position.");
-  const taken = data.tracks.find((t) => t.month === month && t.position === position);
-  if (taken && (await ask(`#${position} in ${month} is "${taken.title}". Replace it? (y/N)`)).toLowerCase() !== "y") throw new Error("Cancelled.");
+    let prev = {};
+    try { prev = JSON.parse(fs.readFileSync(goodbyeFile, "utf8")); } catch { /* first run */ }
+    for (const old of [prev.audio, prev.artwork]) {
+      if (old && old !== audio && old !== artwork && (old.startsWith("/audio/goodbye-") || old.startsWith("/images/goodbye/"))) {
+        try { fs.unlinkSync(path.join(root, "public", old)); } catch { /* already gone */ }
+      }
+    }
+    fs.writeFileSync(goodbyeFile, JSON.stringify({ title, artist, artwork, audio, spotifyUrl: link.url }, null, 2) + "\n");
+    console.log(`\nGoodbye song set: ${title} - ${artist}\nCommit and push to publish.`);
+  } else {
+    const commentary = await ask("Why is it in your top five? (one line; you can edit the JSON later)");
 
-  // 3) Your own clip: validated here AND again at build time.
-  const slug = `${month}-${position}-${slugify(title)}`;
-  let audio = null;
-  const clip = (await ask("Path to YOUR clip (.mp3 or .m4a, max 60 s, max 2 MB; Enter to skip)")).replace(/^["']|["']$/g, "");
-  if (clip) {
-    const ext = path.extname(clip).toLowerCase();
-    if (!AUDIO_EXT.includes(ext)) throw new Error(`Clip must be ${AUDIO_EXT.join(" or ")}.`);
-    if (!fs.existsSync(clip)) throw new Error("Clip file not found.");
-    const problems = await checkAudioFile(path.basename(clip), fs.statSync(clip).size, defaultReadDuration, clip);
-    if (problems.length) throw new Error(problems.join("\n"));
-    fs.mkdirSync(path.join(root, "public/audio"), { recursive: true });
-    fs.copyFileSync(clip, path.join(root, "public/audio", `${slug}${ext}`));
-    audio = `/audio/${slug}${ext}`;
-    console.log(`  clip OK -> public${audio}`);
-  } else console.log("  no clip: this entry shows \"snippet coming soon\" until you add one.");
+    const data = JSON.parse(fs.readFileSync(dataFile, "utf8"));
+    const now = new Date();
+    const month = await ask("Month (YYYY-MM)", `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error("Month must look like 2026-10.");
+    const free = nextFreePosition(data.tracks, month);
+    const position = Number(await ask(`Position 1-${TRACKS_PER_MONTH}`, free ? String(free) : "1"));
+    if (!Number.isInteger(position) || position < 1 || position > TRACKS_PER_MONTH) throw new Error("Bad position.");
+    const taken = data.tracks.find((t) => t.month === month && t.position === position);
+    if (taken && (await ask(`#${position} in ${month} is "${taken.title}". Replace it? (y/N)`)).toLowerCase() !== "y") throw new Error("Cancelled.");
 
-  // 4) Images are saved into your repo so the site never depends on Spotify/Deezer at runtime.
-  const art = spotifyArt || deezerCover;
-  const artwork = art ? await saveImage(art, `/images/listening/${slug}-art.jpg`) : null;
-  const artistImage = artistImg ? await saveImage(artistImg, `/images/listening/${slug}-artist.jpg`) : null;
+    // 3) Your own clip: validated here AND again at build time.
+    const slug = `${month}-${position}-${slugify(title)}`;
+    const audio = await copyClip(slug);
+    if (!audio) console.log("  no clip: this entry shows \"snippet coming soon\" until you add one.");
 
-  const entry = { id: slug, month, position, title, artist, artwork, artistImage, audio, commentary: commentary || null, spotifyUrl: link.url, published: true };
-  data.tracks = upsertTrack(data.tracks, entry);
-  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2) + "\n");
-  console.log(`\nSaved #${position} for ${month}: ${title} - ${artist}\nRun "npm run validate:tracks", then commit and push to publish.`);
+    // 4) Images are saved into your repo so the site never depends on Spotify/Deezer at runtime.
+    const art = spotifyArt || deezerCover;
+    const artwork = art ? await saveImage(art, `/images/listening/${slug}-art.jpg`) : null;
+    const artistImage = artistImg ? await saveImage(artistImg, `/images/listening/${slug}-artist.jpg`) : null;
+
+    const entry = { id: slug, month, position, title, artist, artwork, artistImage, audio, commentary: commentary || null, spotifyUrl: link.url, published: true };
+    data.tracks = upsertTrack(data.tracks, entry);
+    fs.writeFileSync(dataFile, JSON.stringify(data, null, 2) + "\n");
+    console.log(`\nSaved #${position} for ${month}: ${title} - ${artist}\nRun "npm run validate:tracks", then commit and push to publish.`);
+  }
 } catch (e) {
   console.error(`\n${e.message}`);
   process.exitCode = 1;

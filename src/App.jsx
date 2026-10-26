@@ -18,6 +18,8 @@ import WaterTrail from "./components/effects/WaterTrail"
 import CustomCursor from "./components/effects/CustomCursor"
 import Intro from "./components/intro/Intro"
 import ActivityCenter from "./components/sections/ActivityCenter/ActivityCenter"
+import { preloadAssets, prefetchIdle, releasePreload } from "./preload"
+import { stackTopY } from "./utils/scrollMetrics"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -107,20 +109,6 @@ function StackLayer({ id, index, total, progress, style, children }) {
     </motion.div>
   )
 }
-  function ClockedFooter() {
-    const [time, setTime] = useState("")
-    useEffect(() => {
-      const tick = () => {
-        const n = new Date()
-        setTime(`${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}:${String(n.getSeconds()).padStart(2, "0")}`)
-      }
-      tick()
-      const id = setInterval(tick, 1000)
-      return () => clearInterval(id)
-    }, [])
-    return <Footer time={time} />
-  }
-
 function SectionStack({ sections }) {
   const containerRef = useRef(null)
   const total = sections.length
@@ -199,6 +187,9 @@ const typedExpertiseHeading = useTypingEffect("Expertise", 80, expertiseInView)
     if (introDone && lenisRef.current) {
       lenisRef.current.start()
       ScrollTrigger.refresh()
+      prefetchIdle() // activity cards, listening-room art ... while the visitor is just looking around
+      const t = setTimeout(releasePreload, 2500)
+      return () => clearTimeout(t)
     }
   }, [introDone])
 
@@ -329,10 +320,7 @@ useEffect(() => {
   let ticking = false
   const computeScrollTarget = () => {
     ticking = false
-    const expertiseSection = document.getElementById("expertise");
-    const expertisePosition = expertiseSection
-  ? expertiseSection.getBoundingClientRect().top + window.scrollY
-  : 0;
+    const expertisePosition = stackTopY(); // cached, no layout read per scroll frame
     const scrollY = window.scrollY || window.pageYOffset;
 
     // If we haven't scrolled PAST expertise, arrow goes down to #contact
@@ -404,6 +392,7 @@ return (
 <>
 {!introDone && (
   <Intro
+    preload={preloadAssets}
     onVanish={() => setAppReady(true)}
     onDone={() => {
       setAppReady(true)
@@ -473,7 +462,7 @@ setIsOpen={setIsOpen}
   ]}
 />
 
-<ClockedFooter />
+<Footer />
 </main>
 
 <ScrollArrow scrollTarget={scrollTarget}/>
