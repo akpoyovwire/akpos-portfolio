@@ -131,7 +131,15 @@ export default function SectionSide({ section, hidden = false, phone = false, co
     let lastVh = -1;
     let quiet = 0;        // frames since anything moved
     let moving = false;   // letters are mid-glide: only then do they get their own GPU layers
-    const parts = () => Array.from(root.querySelectorAll(".ss-char, .ss-line"));
+    // PHONES / TOUCH: a light version. Moving ~120 separate letters (with blur) in step with the finger is
+    // more than a mid-range phone can do: the recording showed 200-450ms stalls exactly here. So the lite
+    // version moves whole WORDS (about 25 elements), has no blur, and plays as a short timed animation
+    // when the block arrives / leaves instead of being tied to the finger.
+    const lite = phone || window.matchMedia("(pointer: coarse)").matches;
+    const prog = { p: 0 };
+    let liteTarget = -1;
+    let liteTween = null;
+    const parts = () => Array.from(root.querySelectorAll(".ss-char, .ss-word, .ss-line"));
     const clamp = (v) => Math.min(1, Math.max(0, v));
     const layer = root.closest("[data-section]");
 
@@ -165,6 +173,22 @@ export default function SectionSide({ section, hidden = false, phone = false, co
     // WRITE phase.
     const apply = () => {
       if (!tl) return;
+      if (lite) {
+        const target = want > (liteTarget === 1 ? 0.35 : 0.65) ? 1 : 0; // a little hysteresis, no flicker
+        if (target !== liteTarget) {
+          liteTarget = target;
+          liteTween?.kill();
+          root.classList.add("is-moving");
+          liteTween = gsap.to(prog, {
+            p: target,
+            duration: target ? 0.75 : 0.45,
+            ease: "power2.out",
+            onUpdate: () => tl && tl.progress(prog.p),
+            onComplete: () => root.classList.remove("is-moving"),
+          });
+        }
+        return;
+      }
       cur += (want - cur) * SCRAMBLE.glide;
       if (Math.abs(want - cur) < 0.0005) cur = want;
       const nowMoving = cur !== want;
@@ -184,6 +208,9 @@ export default function SectionSide({ section, hidden = false, phone = false, co
 
     const teardown = () => {
       unregister(inst);
+      liteTween?.kill();
+      liteTween = null;
+      liteTarget = -1;
       if (tl) { tl.kill(); tl = null; }
       gsap.set(parts(), { clearProps: "all" });
     };
@@ -192,7 +219,7 @@ export default function SectionSide({ section, hidden = false, phone = false, co
       teardown();
       if (dead) return;
       if (!root.offsetParent && getComputedStyle(root).position !== "fixed") return; // display:none on phones
-      const all = Array.from(root.querySelectorAll(".ss-char"));
+      const all = Array.from(root.querySelectorAll(lite ? ".ss-word" : ".ss-char"));
       if (!all.length) return;
 
       // measure every letter's home slot, grouped by line
@@ -218,7 +245,7 @@ export default function SectionSide({ section, hidden = false, phone = false, co
           [slots[i], slots[j]] = [slots[j], slots[i]];
         }
         row.forEach((o, i) => {
-          const fly = Math.random() < SCRAMBLE.flyers;
+          const fly = Math.random() < (lite ? 0.15 : SCRAMBLE.flyers);
           const from = {
             x: slots[i].x - o.x,
             y: slots[i].y - o.y + (fly ? rand(-70, 70) : 0),
@@ -226,7 +253,7 @@ export default function SectionSide({ section, hidden = false, phone = false, co
             opacity: fly ? 0.25 : 1,
           };
           const to = { x: 0, y: 0, rotation: 0, opacity: 1, ease: "power2.out", duration: 1 - SCRAMBLE.spread, immediateRender: true };
-          if (fly) {
+          if (fly && !lite) {
             from.filter = "blur(6px)";
             to.filter = "blur(0px)";
           }
@@ -237,12 +264,22 @@ export default function SectionSide({ section, hidden = false, phone = false, co
       dirty = true;
       measure(window.innerHeight, Math.max(0, document.documentElement.scrollHeight - window.innerHeight), window.scrollY);
       cur = want;
-      tl.progress(cur);
+      prog.p = cur > 0.5 ? 1 : 0;
+      liteTarget = prog.p;
+      tl.progress(lite ? prog.p : cur);
       register(inst);
     };
 
     let timer;
-    const onResize = () => { clearTimeout(timer); timer = setTimeout(build, 200); };
+    // A phone's address bar sliding away fires "resize" with only the HEIGHT changed. Rebuilding (re-measuring and
+    // re-shuffling every letter) on that was a stall on every scroll direction change. Only the width matters here.
+    let lastW = window.innerWidth;
+    const onResize = () => {
+      if (window.innerWidth === lastW) return;
+      lastW = window.innerWidth;
+      clearTimeout(timer);
+      timer = setTimeout(build, 200);
+    };
     window.addEventListener("resize", onResize);
     // the page above can still change height (images, typed headings): re-sync once it settles
     let rt;

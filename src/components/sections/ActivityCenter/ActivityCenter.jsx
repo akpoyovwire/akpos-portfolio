@@ -1,12 +1,14 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ActivityModal from "./ActivityModal";
-import PlayModal from "./PlayModal";
+// The pop-ups (games, listening room, Mon IA) are only needed when a card is opened, so they are loaded on demand
+// instead of being part of the first download. preload.js fetches them quietly once the site is up.
+const PlayModal = lazy(() => import("./PlayModal"));
 import useCarousel from "./useCarousel";
 import { ACTIVITIES, ACTIVITY_LOGO } from "./activityData";
 import "../../../styles/activity-center.css"; // all Activity Center + game styles live here
-import ListeningRoomModal from "./ListeningRoom/ListeningRoomModal";
-import MonIAModal from "./MyAI/MonIAModal";
+const ListeningRoomModal = lazy(() => import("./ListeningRoom/ListeningRoomModal"));
+const MonIAModal = lazy(() => import("./MyAI/MonIAModal"));
 import SectionSide from "../SectionSide";
 
 // Listening Room and Mon IA get their real interfaces in later steps.
@@ -139,7 +141,13 @@ export default function ActivityCenter({ sectionFade = DEFAULT_FADE }) {
       {/* phones: the words and the big number under the cards (the side column is hidden under 900px) */}
       <SectionSide section="activity" phone />
 
-      <AnimatePresence>{open && <Modal key={open.id} activity={open} onClose={close} />}</AnimatePresence>
+      <AnimatePresence>
+        {open && (
+          <Suspense key={open.id} fallback={null}>
+            <Modal activity={open} onClose={close} />
+          </Suspense>
+        )}
+      </AnimatePresence>
     </motion.section>
   );
 }

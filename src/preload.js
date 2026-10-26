@@ -120,6 +120,10 @@ export function prefetchIdle() {
       ].filter(Boolean);
     } catch { /* data files optional */ }
     await pool([...IDLE, ...extra], 2, loadImage);
+    // the pop-up code (split out of the main bundle) - fetched now so opening one is instant
+    import("./components/sections/ActivityCenter/PlayModal").catch(() => {});
+    import("./components/sections/ActivityCenter/ListeningRoom/ListeningRoomModal").catch(() => {});
+    import("./components/sections/ActivityCenter/MyAI/MonIAModal").catch(() => {});
   };
   if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 4000 });
   else setTimeout(run, 1500);

@@ -31,6 +31,10 @@ import WaterRipple from "../effects/WaterRipple"
      then the gentle pulse starts.
 */
 const HERO_CSS = `
+/* the hero is as tall as the VISIBLE screen (svh). 100vh on a phone counts the area under the address bar too,
+   so the hero was taller than the screen and the profile picture sat half below the fold. svh never changes
+   while scrolling, so About's pin still lines up. */
+.hero-section { min-height: 100vh; min-height: 100svh; }
 .hero-name-window {
   position: relative;
   display: inline-block;
@@ -182,8 +186,7 @@ export default function Hero(){
   id="home"
   initial="hidden"
   animate="visible"
-    style={{ minHeight: "100vh" }}
-  className="relative px-5 sm:px-6 py-28 md:py-48 text-center flex flex-col items-center justify-center overflow-hidden"
+  className="hero-section relative px-5 sm:px-6 py-28 md:py-48 text-center flex flex-col items-center justify-center overflow-hidden"
 >
  
      {/* VIDEO BACKGROUND with water ripples */}

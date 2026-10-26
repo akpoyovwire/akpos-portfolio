@@ -1088,3 +1088,10 @@
     margin: 0 auto 0 0;
   }
 }
+
+/* PHONES: the pop-up backdrops were a live blur over the whole screen while the page behind kept animating.
+   The overlay is almost opaque anyway, so the blur bought nothing and cost a lot (stalls when a pop-up opened / closed). */
+@media (max-width: 899px) {
+  .activity-modal-scroll { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(23, 22, 27, 0.97); }
+  .activity-info-overlay { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, 0.75); }
+}

@@ -407,6 +407,15 @@
 }
 /* tablets and phones: the card fills the width under the name */
 @media (max-width: 899px) {
+  /* KEYBOARD OPEN: only about 40% of the screen is left, so drop everything decorative. The modal's title row
+     and intro line go (the X stays), the card's own header goes, and the card starts right under the X. All
+     of that room goes to the conversation. */
+  .activity-modal:has(.mon-ia-stage.is-typing) .activity-game-side,
+  .activity-modal:has(.mon-ia-stage.is-typing) .activity-game-tagline { display: none; }
+  .activity-modal:has(.mon-ia-stage.is-typing) .activity-modal-inner--game { padding-top: 3.5rem; }
+  .mon-ia-stage.is-typing .mon-ia-head { display: none; }
+  /* a live blur behind a card is expensive on a phone, and the page behind is solid dark anyway */
+  .mon-ia { -webkit-backdrop-filter: none; backdrop-filter: none; }
   /* the card hangs from the top, so when the keyboard shrinks it (MonIAChat.jsx) the top stays put */
   .activity-game-main:has(> .mon-ia-stage) { justify-content: flex-start; }
   /* two big blurred blobs drifting forever behind a blurred card = constant repaints on a phone */

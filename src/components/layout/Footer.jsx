@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Github, Linkedin, ChevronDown } from "lucide-react";
 import { FaMedium } from "react-icons/fa";
 import MonIAChat from "../sections/ActivityCenter/MyAI/MonIAChat";
-import MonIAModal from "../sections/ActivityCenter/MyAI/MonIAModal";
+const MonIAModal = lazy(() => import("../sections/ActivityCenter/MyAI/MonIAModal"));
 import { ACTIVITY_LOGO, AI_NAME } from "../sections/ActivityCenter/activityData";
 import GoodbyePlayer from "./GoodbyePlayer";
 import goodbye from "../../data/goodbyeSong.json";
@@ -262,7 +262,11 @@ export default function Footer() {
 
       </footer>
 
-      {modalOpen && <MonIAModal activity={{ name: AI_NAME }} onClose={() => setModalOpen(false)} />}
+      {modalOpen && (
+        <Suspense fallback={null}>
+          <MonIAModal activity={{ name: AI_NAME }} onClose={() => setModalOpen(false)} />
+        </Suspense>
+      )}
     </>
   );
 }

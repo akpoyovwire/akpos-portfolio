@@ -61,7 +61,8 @@
 .ss-char { display: inline-block; white-space: pre; }
 /* a GPU layer per letter only while the letters are actually moving (SectionSide.jsx toggles .is-moving).
    Permanent will-change on ~250 letters meant ~250 compositor layers sitting there during every scroll. */
-.section-side-inner.is-moving .ss-char { will-change: transform; }
+.section-side-inner.is-moving .ss-char,
+.section-side-inner.is-moving .ss-word { will-change: transform; }
 /* ----- anything passed as children (Works' arrow buttons), under the words ----- */
 /* Taken out of the flow (absolute, just under the words) so the words + the big number behind
    them stay centred on each other, and the arrows can be placed freely.
@@ -106,8 +107,9 @@
 @media (max-width: 1099.98px) {
   /* Expertise: sits in the free space at the bottom of the section and fades away while a discipline is open */
   .section-side--expertise-phone {
-    display: block; position: absolute; z-index: 5; left: 0; right: 0; bottom: 0;
-    padding: 0 1.5rem 1.25rem;
+    display: block; position: absolute; z-index: 5; left: 0; right: 0;
+    bottom: 14vh; bottom: 14svh;   /* raised: it used to sit on the very bottom edge, under the browser bar and the arrow */
+    padding: 0 1.5rem;
     transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0s;
   }
   .section-side--expertise-phone.is-hidden {

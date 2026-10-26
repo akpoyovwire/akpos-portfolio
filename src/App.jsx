@@ -18,6 +18,7 @@ import WaterTrail from "./components/effects/WaterTrail"
 import CustomCursor from "./components/effects/CustomCursor"
 import Intro from "./components/intro/Intro"
 import ActivityCenter from "./components/sections/ActivityCenter/ActivityCenter"
+import MapBackground from "./components/effects/MapBackground"
 import { preloadAssets, prefetchIdle, releasePreload } from "./preload"
 import { stackTopY } from "./utils/scrollMetrics"
 
@@ -55,7 +56,7 @@ gsap.registerPlugin(ScrollTrigger)
 */
 const HOLD_FRACTION = 0.6 // portion of each section's slot spent fully settled before the next one starts covering it
 
-function StackLayer({ id, index, total, progress, style, children }) {
+function StackLayer({ id, index, total, progress, style, map, children }) {
   const slot = 1 / total
   const transitionFraction = 1 - HOLD_FRACTION
 
@@ -84,6 +85,14 @@ function StackLayer({ id, index, total, progress, style, children }) {
   // change is nearly free.
   const dim = useTransform(progress, coverRange, isLast ? [0, 0] : [0, 0.45])
 
+  // The map behind this layer stops drawing once the NEXT layer has fully covered it. Only flips state when it
+  // crosses that line (not every scroll frame). Being scrolled past / off screen is handled inside MapBackground.
+  const [covered, setCovered] = useState(false)
+  useEffect(() => {
+    if (!map || isLast) return undefined
+    return progress.on("change", (v) => setCovered(v >= coverEnd - 0.002))
+  }, [progress, map, isLast, coverEnd])
+
   return (
     <motion.div
       className="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden"
@@ -98,7 +107,8 @@ function StackLayer({ id, index, total, progress, style, children }) {
         it. This inner div is never touched by Framer Motion, so GSAP can
         animate it freely without any conflict.
       */}
-      <div data-section={id} className="w-full h-full flex items-center justify-center">
+      {map && <MapBackground paused={covered} />}
+      <div data-section={id} className="relative w-full h-full flex items-center justify-center" style={{ zIndex: 1 }}>
         {children}
       </div>
       <motion.div
@@ -134,7 +144,7 @@ function SectionStack({ sections }) {
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {sections.map((s, i) => (
-          <StackLayer key={s.id} id={s.id} index={i} total={total} progress={progress} style={s.style}>
+          <StackLayer key={s.id} id={s.id} index={i} total={total} progress={progress} style={s.style} map={s.map}>
             {s.node}
           </StackLayer>
         ))}
@@ -161,7 +171,7 @@ const pageBg = "linear-gradient(135deg, #1F1E24, #23241E)"
 // by FlipStack's FlipPage wrapper - now just a plain style object applied
 // to each section's own wrapper div).
 const sectionBgStyle = {
-  background: `url(/map/section-map-bg.svg) center/cover no-repeat, ${pageBg}`,
+  background: pageBg, // the map itself is now drawn by <MapBackground /> inside each layer (see StackLayer)
 }
 
 // WORKS
@@ -433,6 +443,7 @@ setIsOpen={setIsOpen}
     {
       id: "expertise",
       style: sectionBgStyle,
+      map: true,
       node: (
         <Expertise
           
@@ -445,6 +456,7 @@ setIsOpen={setIsOpen}
     {
       id: "works",
       style: sectionBgStyle,
+      map: true,
       node: (
         <Works
           sectionFade={sectionFade}
@@ -456,6 +468,7 @@ setIsOpen={setIsOpen}
           {
         id: "activity",
         style: sectionBgStyle,
+      map: true,
         node: <ActivityCenter sectionFade={sectionFade} />,
       },
 
