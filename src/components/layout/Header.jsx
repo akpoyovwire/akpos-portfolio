@@ -246,29 +246,49 @@ export default function Header() {
   const mobileRef = useRef(null)
 
   // Which section is current, and has the hero fully left the screen?
+  // Page positions are measured only when the layout changes (resize, fonts, images, pins being built),
+  // then every scroll frame is plain arithmetic on window.scrollY. Before, each scroll frame called
+  // getBoundingClientRect() on five elements, which forces the browser to lay the page out again.
   useEffect(() => {
     let raf = 0
+    let homeBottom = null
+    const tops = {}
+    const measure = () => {
+      const y = window.scrollY
+      const home = document.getElementById("home")
+      homeBottom = home ? home.getBoundingClientRect().bottom + y : null
+      for (const [id] of ACTIVE_RULES) {
+        const el = document.getElementById(id)
+        tops[id] = el ? el.getBoundingClientRect().top + y : null
+      }
+    }
     const compute = () => {
       raf = 0
+      const y = window.scrollY
       const vh = window.innerHeight
-      const home = document.getElementById("home")
-      setHeroGone(home ? home.getBoundingClientRect().bottom <= 0 : window.scrollY > vh)
+      setHeroGone(homeBottom != null ? homeBottom - y <= 0 : y > vh)
 
       let current = "about"
       for (const [id, factor] of ACTIVE_RULES) {
-        const el = document.getElementById(id)
-        if (el && el.getBoundingClientRect().top <= vh * factor) current = id
+        if (tops[id] != null && tops[id] - y <= vh * factor) current = id
       }
       setActive(current)
     }
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(compute) }
-    compute()
+    const onLayout = () => { measure(); onScroll() }
+    onLayout()
     window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onScroll)
+    window.addEventListener("resize", onLayout)
+    window.addEventListener("load", onLayout)
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(onLayout) : null
+    ro?.observe(document.body)
+    document.fonts?.ready?.then(onLayout)
     return () => {
       if (raf) cancelAnimationFrame(raf)
+      ro?.disconnect()
       window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", onScroll)
+      window.removeEventListener("resize", onLayout)
+      window.removeEventListener("load", onLayout)
     }
   }, [])
 
@@ -356,6 +376,14 @@ export default function Header() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
+              <div className="nav-drop-top">
+                <span>menu</span>
+                <span className="nav-dots" aria-hidden="true">
+                  <i style={{ background: ORANGE }} />
+                  <i style={{ background: BLUE }} />
+                  <i style={{ background: BLACK }} />
+                </span>
+              </div>
               <VerticalList
                 large
                 pointer={pointer}

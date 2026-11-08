@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { Mail, Github, Linkedin } from "lucide-react"
 import { FaMedium } from "react-icons/fa"
 import WaterRipple from "../effects/WaterRipple"
+import HeroFingerWater from "../effects/HeroFingerWater"
 
 /*
   Hero animations - why they are CSS keyframes now
@@ -194,6 +195,8 @@ export default function Hero(){
 
   {/* Overlay for darkness */}
   <div className="absolute inset-0 bg-black/40"></div>
+  {/* realistic finger-through-water, hero only (the normal WaterTrail stays quiet over the hero) */}
+  <HeroFingerWater />
    {/* PROFILE PICTURE (bottom left) - assembled like a jigsaw puzzle */}
   <motion.a
     href="https://www.linkedin.com/in/akpoyovwire"

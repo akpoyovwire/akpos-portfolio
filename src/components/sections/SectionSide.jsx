@@ -120,6 +120,8 @@ export default function SectionSide({ section, hidden = false, phone = false, co
     const root = rootRef.current;
     if (!root || !c) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // PHONES / TOUCH / narrow screens: no unscramble at all. The words are just there, readable, nothing animates in or out.
+    if (phone || window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 900) return;
 
     let tl = null;
     let dead = false;

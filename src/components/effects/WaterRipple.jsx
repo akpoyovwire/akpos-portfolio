@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from "react"
+import React, { useEffect, useLayoutEffect, useRef } from "react"
 import { gsap } from "gsap"
+import { acquireHeroVideo, heroVideoMayPlay } from "../../preload"
 
 /*
   WaterRipple
@@ -45,7 +46,7 @@ import { gsap } from "gsap"
 
 // ---- how many ripples can exist at once ----
 const MAX_CLICKS = 8 // click ripples alive at the same time; a 9th click reuses the oldest slot
-const MAX_TRAIL = 10 // mouse-trail ripples alive at the same time; same reuse rule
+const MAX_TRAIL = 14 // mouse-trail ripples alive at the same time; same reuse rule
 const TOTAL = MAX_CLICKS + MAX_TRAIL // slots sent to the shader. More = more work per pixel on the GPU
 
 // ---- click ripples (the "stone dropped in water") ----
@@ -57,9 +58,14 @@ const TAIL = 0.006 // how quickly the waves die off BEHIND the leading ring. Hig
 const SHINE = 0.02 // how much wave crests brighten and troughs darken the picture. 0 = pure warping, no highlights
 
 // ---- mouse-trail ripples (small ones left behind your cursor) ----
-const TRAIL_DURATION = 2 // seconds a trail ripple lives (short, so the trail stays light)
-const TRAIL_SPEED = 100.0 // how fast a trail ring spreads, px per second (slower than clicks)
-const TRAIL_POWER = 0.45 // strength of a trail ripple compared to a click one (0.45 = 45%)
+const TRAIL_DURATION = 2.4 // seconds a trail ripple lives (short, so the trail stays light)
+const TRAIL_SPEED = 130.0 // how fast a trail ring spreads, px per second (slower than clicks)
+// >>> THE DEPTH KNOB for the mouse trail on the hero <<<
+// 1 = gentle, 1.4 = clearly visible (default), 2 = deep, 2.5 = the most you should go before the picture starts to tear.
+// It scales how far each trail ripple pushes the video around AND how much light/dark the ripples are allowed to add.
+const TRAIL_DEPTH = 5
+const TRAIL_POWER = 0.5 * TRAIL_DEPTH // strength of a trail ripple compared to a click one (0.5 = 50%)
+const SHADE_LIMIT = 0.1 * TRAIL_DEPTH // the most the ripples may brighten or darken the picture (0.1 = 10%)
 
 const VERTEX = `
 attribute vec2 a_pos;
@@ -133,7 +139,8 @@ void main() {
   uv = (uv - 0.5) * scale + 0.5;
 
   vec4 color = texture2D(u_media, uv);
-  color.rgb *= 1.0 + shade * SHINE;
+  // many overlapping trail ripples add up; clamp so they can never push the picture toward black
+  color.rgb *= 1.0 + clamp(shade * SHINE, -${SHADE_LIMIT.toFixed(3)}, ${SHADE_LIMIT.toFixed(3)});
   gl_FragColor = vec4(color.rgb, 1.0);
 }
 `
@@ -141,6 +148,22 @@ void main() {
 export default function WaterRipple({ src, type = "video" }) {
   const canvasRef = useRef(null)
   const mediaRef = useRef(null)
+  const holderRef = useRef(null)
+
+  // The hero <video> is owned by preload.js (it was buffered during the intro). Adopt that same element
+  // instead of creating a second one: no second download, no second decode, no restart.
+  useLayoutEffect(() => {
+    if (type !== "video") return undefined
+    const holder = holderRef.current
+    const v = acquireHeroVideo(src)
+    v.className = "absolute inset-0 w-full h-full object-cover"
+    holder.appendChild(v)
+    mediaRef.current = v
+    if (heroVideoMayPlay() && v.paused) v.play().catch(() => {})
+    return () => {
+      if (v.parentNode === holder) holder.removeChild(v)
+    }
+  }, [type, src])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -284,6 +307,25 @@ export default function WaterRipple({ src, type = "video" }) {
         ? [media.naturalWidth, media.naturalHeight]
         : [media.videoWidth, media.videoHeight]
 
+    // Upload a video frame to the GPU only when the video really has a new one (a 30fps video was being
+    // re-uploaded 60 times a second). requestVideoFrameCallback tells us; images upload every frame as before.
+    const canSkip = type === "video" && typeof media.requestVideoFrameCallback === "function"
+    let frameReady = true
+    let vfcId = 0
+    const onVideoFrame = () => {
+      frameReady = true
+      vfcId = media.requestVideoFrameCallback(onVideoFrame)
+    }
+    const watchFrames = () => {
+      if (!canSkip || vfcId) return
+      frameReady = true
+      vfcId = media.requestVideoFrameCallback(onVideoFrame)
+    }
+    const unwatchFrames = () => {
+      if (vfcId && media.cancelVideoFrameCallback) media.cancelVideoFrameCallback(vfcId)
+      vfcId = 0
+    }
+
     let running = false
     const render = () => {
       const now = performance.now() / 1000
@@ -294,6 +336,7 @@ export default function WaterRipple({ src, type = "video" }) {
       if (!hasActiveRipples(now)) {
         setActive(false)
         running = false
+        unwatchFrames()
         gsap.ticker.remove(render)
         return
       }
@@ -310,7 +353,10 @@ export default function WaterRipple({ src, type = "video" }) {
 
       const [mw, mh] = mediaSize()
       gl.bindTexture(gl.TEXTURE_2D, texture)
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, media)
+      if (frameReady || !canSkip) {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, media)
+        if (canSkip) frameReady = false
+      }
       gl.uniform2f(uRes, cssW, cssH)
       gl.uniform2f(uMediaRes, mw, mh)
       gl.uniform1f(uDpr, dpr)
@@ -319,6 +365,7 @@ export default function WaterRipple({ src, type = "video" }) {
 
       if (!visible) {
         running = false // leave the ticker while off-screen
+        unwatchFrames()
         gsap.ticker.remove(render)
       }
     }
@@ -326,6 +373,7 @@ export default function WaterRipple({ src, type = "video" }) {
       // only worth running if there's an active ripple to actually show
       if (!running && active && mediaReady()) {
         running = true
+        watchFrames()
         gsap.ticker.add(render)
       }
     }
@@ -339,6 +387,7 @@ export default function WaterRipple({ src, type = "video" }) {
 
     return () => {
       gsap.ticker.remove(render)
+      unwatchFrames()
       clearInterval(readyPoll)
       document.removeEventListener("click", addClick)
       window.removeEventListener("water:drop", addTrail)
@@ -360,7 +409,7 @@ export default function WaterRipple({ src, type = "video" }) {
     if (!v) return
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) v.play().catch(() => {})
+        if (entry.isIntersecting) { if (heroVideoMayPlay()) v.play().catch(() => {}) }
         else v.pause()
       },
       { threshold: 0 }
@@ -380,16 +429,7 @@ export default function WaterRipple({ src, type = "video" }) {
           className="absolute inset-0 w-full h-full object-cover"
         />
       ) : (
-        <video
-          ref={mediaRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src={src} type="video/mp4" />
-        </video>
+        <div ref={holderRef} className="absolute inset-0" />
       )}
       <canvas
         ref={canvasRef}

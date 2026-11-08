@@ -134,3 +134,12 @@
 @media (prefers-reduced-motion: reduce) {
   .section-side--expertise-phone, .section-side--expertise-phone.is-hidden { transition: none; }
 }
+/* PHONES: the words are always there. No fade in / out when a discipline opens, no slide, nothing animates. */
+@media (max-width: 1099.98px) {
+  .section-side--expertise-phone,
+  .section-side--expertise-phone.is-hidden { transition: none; }
+}
+@media (hover: none), (max-width: 899.98px) {
+  .section-side .ss-line { transform: none; }
+  .ssc-fade { animation: none; }
+}

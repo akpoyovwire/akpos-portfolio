@@ -415,7 +415,7 @@ return (
 {appReady && (
 <>
 {introDone && <Ripple />}
-{introDone && <WaterTrail />}
+{introDone && <WaterTrail excludeId="home" />}
 
 <main className="min-h-screen voltaire-regular text-[#EDEDF2] relative" style={{ background: pageBg }}>
 <Header 

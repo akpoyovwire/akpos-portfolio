@@ -59,16 +59,51 @@ const BAND_H = 150
 // ---- tuning ----
 const TRAIL = 120 // width of the rainbow zone behind the pen
 const SLANT = -14 // lean of the pen edge, matches the cursive slant
-const SECONDS_PER_CHAR = 0.07 // writing speed
-const HOLD_AFTER = 0.4// seconds the finished text stays before vanishing
-const SIGN_SECONDS = 1.4       // new — signature speed, no longer tied to the text
+const SECONDS_PER_CHAR = 0.06 // writing speed (was 0.07)
+const HOLD_AFTER = 0.15 // seconds the finished text stays before vanishing (was 0.2)
+const SIGN_SECONDS = 1.2 // signature speed (was 1.4)
 
 // ---- signature (logo) tuning ----
-const SIG_COLOR = "#ffffff" // same white as the written line
+// ---- engraving (carved into the wall) ----
+// An engraved line is a groove: the floor of the groove is a little darker than the wall, the top-left
+// edge sits in shadow (it overhangs), and the bottom-right edge catches a thin line of light.
+const ENGRAVE_FLOOR = "#FFFFFF" // the floor of the groove (light, so the words read bright)
+const ENGRAVE_DARK = "#000000" // the shadowed wall of the groove (top-left)
+const ENGRAVE_LIP = "#d8d8e0" // the lit edge (bottom-right)
 const SIG_HEIGHT = 180 // logo height in viewBox units (width follows the logo's proportions)
 const SIG_TOP = 70 // distance from the top of the stage; the line starts around y=285
 const SIG_STROKE = 10 // pen thickness, in the logo's own 512x402 units (~5.4 on screen)
-const SIG_UNSIGN_SECONDS = 1 // how long the erase takes
+const SIG_UNSIGN_SECONDS = 0.85 // how long the erase takes (was 1)
+
+// ---- the fade-out, and the hero video's cue ----
+// The hero mounts when the erase ends (SIG_UNSIGN_SECONDS after "vanish"). The root fade ends
+// FADE_ROOT_DELAY + FADE_ROOT_MS after "vanish". The hero video is started VIDEO_LEAD_MS before that
+// end, so it is already about 0.4s into the video at the moment the intro is gone.
+const FADE_STAGE_MS = 1100
+const FADE_ROOT_DELAY = 480
+const FADE_ROOT_MS = 740
+const VIDEO_LEAD_MS = 400
+
+// ---- the intro background: ONE colour, a deep, ashy burnt orange, with a frosted-glass finish ----
+// No tiles, no grid. Static CSS only (painted once, no filter, no backdrop blur), so it costs nothing per frame.
+// Recipe: a smooth gold gradient for the colour; a soft bloom of light top-left and a deeper warm pool
+// bottom-right for depth; a crisp diagonal glare band and a bright top edge for the polished-glass
+// reflection; a gentle vignette; and a fine white grain on top for the frosted surface.
+const ORANGE_BG = "linear-gradient(160deg, #1b1a20 0%, #0d0d10 55%, #000000 100%)" // near-black, in the family of the page background
+const GLASS = {
+  backgroundImage: [
+    "linear-gradient(112deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,.12) 33%, rgba(255,255,255,0) 33.4%)", // glare band
+    "linear-gradient(112deg, rgba(255,255,255,0) 52%, rgba(255,255,255,.10) 52.3%, rgba(255,255,255,.03) 70%, rgba(255,255,255,0) 70.3%)", // second, fainter band
+    "linear-gradient(to bottom, rgba(255,255,255,.42) 0%, rgba(255,255,255,0) 14%)", // bright top edge
+    "radial-gradient(ellipse 62% 52% at 20% 16%, rgba(255,205,168,.6) 0%, rgba(255,205,168,0) 62%)", // light bloom
+    "radial-gradient(ellipse 58% 48% at 84% 90%, rgba(88,28,6,.55) 0%, rgba(88,28,6,0) 66%)", // warm pool
+    "radial-gradient(ellipse at center, rgba(255,255,255,0) 52%, rgba(48,18,6,.42) 100%)", // vignette
+  ].join(", "),
+}
+const GRAIN = {
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+  opacity: 0.12,
+}
 
 // The logo's centre-line as one stroke, traced from logo.png (512 x 402).
 const SIG_W = 512
@@ -91,7 +126,7 @@ export default function Intro({ onDone, onVanish, preload }) {
   const whiteLayerRef = useRef(null)
   const whiteSvgRef = useRef(null)
   const rbSvgRef = useRef(null)
-  const sigPathRef = useRef(null)
+  const sigGroupRef = useRef(null)
   const tlRef = useRef(null)
   const doneRef = useRef(onDone)
   doneRef.current = onDone
@@ -100,10 +135,17 @@ export default function Intro({ onDone, onVanish, preload }) {
   const preloadRef = useRef(preload)
   preloadRef.current = preload
   const animsRef = useRef([]) // compositor (WAAPI) animations for the vanish
+  const videoTimerRef = useRef(0) // pending "start the hero video" cue
 
   const speedUp = () => {
     if (tlRef.current) tlRef.current.timeScale(6)
     animsRef.current.forEach((a) => a.updatePlaybackRate(6))
+    // sped up: the fade is about to end, so cue the hero video now instead of waiting
+    if (videoTimerRef.current) {
+      clearTimeout(videoTimerRef.current)
+      videoTimerRef.current = 0
+      window.dispatchEvent(new Event("hero:video-start"))
+    }
   }
 
   useEffect(() => {
@@ -114,6 +156,8 @@ export default function Intro({ onDone, onVanish, preload }) {
 
     let cancelled = false
     let ctx
+    // phones: a smaller blur radius on the vanish (a full-screen 18px blur is heavy for a phone GPU)
+    const lite = window.matchMedia("(pointer: coarse)").matches
 
     const build = () => {
       if (cancelled || !stageRef.current) return
@@ -141,7 +185,7 @@ export default function Intro({ onDone, onVanish, preload }) {
         const textEl = whiteSvgRef.current.querySelector("#intro-text")
         const rbRect = rbSvgRef.current.querySelector("#intro-rb-rect")
         const grad = rbSvgRef.current.querySelector("#intro-rb-grad")
-        const sig = sigPathRef.current
+        const sig = Array.from(sigGroupRef.current.querySelectorAll("path")) // lip, groove, floor: animated together
 
         const bb = textEl.getBBox()
         const minX = bb.x - 10
@@ -173,7 +217,7 @@ export default function Intro({ onDone, onVanish, preload }) {
 
         // Signature starts fully hidden (dash = whole path, pushed out of view).
         // Measured here so it is exact at any screen size.
-        const sigLen = sig.getTotalLength()
+        const sigLen = sig[0].getTotalLength()
         gsap.set(sig, {
           attr: { "stroke-dasharray": `${sigLen} ${sigLen}` },
           strokeDashoffset: sigLen,
@@ -232,22 +276,36 @@ export default function Intro({ onDone, onVanish, preload }) {
           const stage = stageRef.current
           const root = rootRef.current
           if (!stage || !root) return
+          const rate = tl.timeScale()
           stage.style.willChange = "transform, opacity, filter"
           const a1 = stage.animate(
             [
               { filter: "blur(0px)", opacity: 1, transform: "scale(1)" },
-              { filter: "blur(18px)", opacity: 0, transform: "scale(1.08)" },
+              { filter: lite ? "blur(8px)" : "blur(18px)", opacity: 0, transform: "scale(1.08)" },
             ],
-            { duration: 1200, easing: "cubic-bezier(0.55, 0.085, 0.68, 0.53)", fill: "forwards" }
+            { duration: FADE_STAGE_MS, easing: "cubic-bezier(0.55, 0.085, 0.68, 0.53)", fill: "forwards" }
           )
           const a2 = root.animate([{ opacity: 1 }, { opacity: 0 }], {
-            duration: 900,
-            delay: 600,
+            duration: FADE_ROOT_MS,
+            delay: FADE_ROOT_DELAY,
             easing: "ease-out",
             fill: "forwards",
           })
+          a1.updatePlaybackRate(rate)
+          a2.updatePlaybackRate(rate)
           a2.onfinish = () => doneRef.current()
           animsRef.current = [a1, a2]
+
+          // Cue the hero video: VIDEO_LEAD_MS before the fade ends, but never later than the moment the
+          // hero mounts, so a busy main thread during the mount can't delay it.
+          const mountAt = SIG_UNSIGN_SECONDS * 1000
+          const fadeEnd = FADE_ROOT_DELAY + FADE_ROOT_MS
+          const wait = Math.max(0, Math.min(fadeEnd - VIDEO_LEAD_MS, mountAt - 30)) / rate
+          clearTimeout(videoTimerRef.current)
+          videoTimerRef.current = setTimeout(() => {
+            videoTimerRef.current = 0
+            window.dispatchEvent(new Event("hero:video-start"))
+          }, wait)
         }
         tl.call(startVanish, null, "vanish")
 
@@ -266,12 +324,10 @@ export default function Intro({ onDone, onVanish, preload }) {
           ])
         : Promise.resolve()
 
-    // Start only once the page has SETTLED. The browser finishes loading the
-    // hero video, ~20 images and webfonts right as the page loads, and that
-    // is a heavy burst of main-thread work. If the pen is already moving
-    // when it lands, you see a freeze halfway through. Waiting for it
-    // means the burst happens on the calm dark screen instead. Capped at
-    // 3s so a slow connection never leaves the screen empty for long.
+    // Start once the page has SETTLED, but wait no longer than 1.2s (was 3s). On a phone the "load" event
+    // waits for the hero video's preload hint, so the old 3s cap left the orange screen empty for a long
+    // time. The image/video work is now done by preload.js in small, off-main-thread steps, so starting
+    // sooner no longer causes a freeze mid-writing.
     let onLoad
     let capTimer
     const pageSettled = new Promise((resolve) => {
@@ -281,7 +337,7 @@ export default function Intro({ onDone, onVanish, preload }) {
       } else {
         onLoad = finish
         window.addEventListener("load", onLoad, { once: true })
-        capTimer = setTimeout(finish, 3000)
+        capTimer = setTimeout(finish, 1200)
       }
     })
 
@@ -291,6 +347,7 @@ export default function Intro({ onDone, onVanish, preload }) {
       cancelled = true
       if (onLoad) window.removeEventListener("load", onLoad)
       clearTimeout(capTimer)
+      clearTimeout(videoTimerRef.current)
       gsap.ticker.lagSmoothing(0)
       animsRef.current.forEach((a) => a.cancel())
       if (ctx) ctx.revert()
@@ -302,9 +359,12 @@ export default function Intro({ onDone, onVanish, preload }) {
       ref={rootRef}
       onClick={speedUp}
       className="fixed inset-0 z-[9999] flex items-center justify-center"
-      // fully opaque: 0% transparency
-      style={{ backgroundColor: "#18171b" }}
+      // fully opaque near-black; the glass finish and grain are the two layers right below
+      style={{ background: ORANGE_BG }}
     >
+      {/* frosted-glass finish + grain: static, painted once */}
+
+
       {/* Frame: fixes the size. The stage (writing) and the signature are
           siblings inside it, so the writing's blur-away never touches the
           signature - it erases itself crisply. */}
@@ -324,21 +384,26 @@ export default function Intro({ onDone, onVanish, preload }) {
           >
             <svg ref={whiteSvgRef} viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="block w-full h-full" aria-hidden="true">
               <defs>
-                {/* engraved look: dark shadow inside the top-left edges, thin light lip at the bottom-right */}
-                <filter id="intro-engrave" x="-10%" y="-40%" width="120%" height="190%" colorInterpolationFilters="sRGB">
+                {/* engraved into the wall: light lip behind (bottom-right), groove floor, shadow inside the top-left edge.
+                    This is painted ONCE with the layer, then only the clip moves, so it costs nothing per frame. */}
+                <filter id="intro-engrave" x="-5%" y="-30%" width="110%" height="170%" colorInterpolationFilters="sRGB">
+                  <feOffset in="SourceAlpha" dx="0.9" dy="1.2" result="lipOff" />
+                  <feGaussianBlur in="lipOff" stdDeviation="0.5" result="lipBlur" />
+                  <feFlood floodColor={ENGRAVE_LIP} floodOpacity="0.95" result="lipColor" />
+                  <feComposite in="lipColor" in2="lipBlur" operator="in" result="lip" />
                   <feComponentTransfer in="SourceAlpha" result="inverted">
                     <feFuncA type="table" tableValues="1 0" />
                   </feComponentTransfer>
-                  <feGaussianBlur in="inverted" stdDeviation="1.6" result="invBlur" />
-                  <feOffset in="invBlur" dx="2" dy="3" result="invOff" />
-                  <feFlood floodColor="#0a0a0c" floodOpacity="0.25" result="dark" />
-                  <feComposite in="dark" in2="invOff" operator="in" result="shadowRaw" />
+                  <feGaussianBlur in="inverted" stdDeviation="0.7" result="invBlur" />
+                  <feOffset in="invBlur" dx="0.8" dy="1.1" result="invOff" />
+                  <feFlood floodColor={ENGRAVE_DARK} floodOpacity="0.4" result="darkColor" />
+                  <feComposite in="darkColor" in2="invOff" operator="in" result="shadowRaw" />
                   <feComposite in="shadowRaw" in2="SourceAlpha" operator="in" result="innerShadow" />
-                  <feMerge result="engraved">
+                  <feMerge>
+                    <feMergeNode in="lip" />
                     <feMergeNode in="SourceGraphic" />
                     <feMergeNode in="innerShadow" />
                   </feMerge>
-                  <feDropShadow in="engraved" dx="0.8" dy="1.4" stdDeviation="0.4" floodColor="#ffffff" floodOpacity="0.3" />
                 </filter>
               </defs>
               <text
@@ -348,8 +413,8 @@ export default function Intro({ onDone, onVanish, preload }) {
                 textAnchor="middle"
                 fontFamily={FONT}
                 fontSize={FONT_SIZE}
-                fill="#ffffff"
-                
+                fill={ENGRAVE_FLOOR}
+                filter="url(#intro-engrave)"
               >
                 {LINE}
               </text>
@@ -406,17 +471,13 @@ export default function Intro({ onDone, onVanish, preload }) {
           style={{ willChange: "transform" }}
           aria-hidden="true"
         >
-          <g transform={SIG_TRANSFORM}>
-            <path
-              ref={sigPathRef}
-              d={SIG_PATH}
-              fill="none"
-              stroke={SIG_COLOR}
-              strokeWidth={SIG_STROKE}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ opacity: 0 }}
-            />
+          <g transform={SIG_TRANSFORM} ref={sigGroupRef}>
+            {/* engraved signature: three strokes of the same path, no filter (so it stays cheap while it animates).
+                1) the lit lip, nudged down-right  2) the dark groove wall  3) the groove floor, nudged down-right,
+                which leaves the dark wall showing along the top-left edge. */}
+            <path d={SIG_PATH} fill="none" stroke={ENGRAVE_LIP} strokeWidth={SIG_STROKE} strokeLinecap="round" strokeLinejoin="round" transform="translate(2.6 3.2)" style={{ opacity: 0 }} />
+            <path d={SIG_PATH} fill="none" stroke={ENGRAVE_DARK} strokeWidth={SIG_STROKE} strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0 }} />
+            <path d={SIG_PATH} fill="none" stroke={ENGRAVE_FLOOR} strokeWidth={SIG_STROKE * 0.74} strokeLinecap="round" strokeLinejoin="round" transform="translate(1.7 2.2)" style={{ opacity: 0 }} />
           </g>
         </svg>
       </div>

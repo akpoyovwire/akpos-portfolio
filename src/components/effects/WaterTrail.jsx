@@ -17,6 +17,10 @@ import { gsap } from "gsap"
 
   rgb: the ring color as "r,g,b". White suits dark backgrounds. On a bright
   background use something dark, e.g. "31,30,36".
+
+  excludeId (optional, off by default): id of an element where this trail stays quiet, e.g. "home".
+  Over that element no rings or wake are dropped, so something else (HeroFingerWater) can own it.
+  Rings already on screen finish as normal. Leave it out and everything behaves exactly as before.
 */
 
 const FOLLOW = 0.14 // 0-1. Lower = more delay behind the mouse
@@ -26,7 +30,7 @@ const MAX_RINGS = 60 // safety cap; irrelevant under normal movement, guards wor
 const RING_SIZE = 46 // max ring radius in px
 const WAKE_ANGLE = (19.5 * Math.PI) / 100 // the classic duck-wake angle
 
-export default function WaterTrail({ rgb = "255,255,255" }) {
+export default function WaterTrail({ rgb = "255,255,255", excludeId = null }) {
   const canvasRef = useRef(null)
 
   useEffect(() => {
@@ -43,6 +47,21 @@ export default function WaterTrail({ rgb = "255,255,255" }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
     resize()
+
+    // optional quiet zone (measured only when the layout changes)
+    const quiet = excludeId ? document.getElementById(excludeId) : null
+    let qTop = 0
+    let qBottom = -1
+    const measureQuiet = () => {
+      if (!quiet) return
+      const r = quiet.getBoundingClientRect()
+      qTop = r.top + window.scrollY
+      qBottom = qTop + r.height
+    }
+    measureQuiet()
+    const qro = quiet && typeof ResizeObserver !== "undefined" ? new ResizeObserver(measureQuiet) : null
+    qro?.observe(quiet)
+    const inQuiet = (y) => !!quiet && y + window.scrollY >= qTop && y + window.scrollY <= qBottom
 
     const target = { x: 0, y: 0 }
     const follower = { x: 0, y: 0 }
@@ -64,8 +83,10 @@ export default function WaterTrail({ rgb = "255,255,255" }) {
       vx += (follower.x - px - vx) * 0.2
       vy += (follower.y - py - vy) * 0.2
       const speed = Math.hypot(vx, vy)
+      const quietNow = inQuiet(follower.y)
+      if (quietNow) lastDrop = { x: follower.x, y: follower.y }
 
-      if (Math.hypot(follower.x - lastDrop.x, follower.y - lastDrop.y) >= SPACING) {
+      if (!quietNow && Math.hypot(follower.x - lastDrop.x, follower.y - lastDrop.y) >= SPACING) {
         rings.push({ x: follower.x, y: follower.y, born: now })
         if (rings.length > MAX_RINGS) rings.shift()
         lastDrop = { x: follower.x, y: follower.y }
@@ -98,7 +119,7 @@ export default function WaterTrail({ rgb = "255,255,255" }) {
       }
 
       // V-shaped wake behind the direction of travel
-      if (speed > 0.6) {
+      if (!quietNow && speed > 0.6) {
         const len = Math.min(speed * 9, 140)
         const back = Math.atan2(vy, vx) + Math.PI
         ctx.lineWidth = 1.3
@@ -141,13 +162,15 @@ export default function WaterTrail({ rgb = "255,255,255" }) {
     }
 
     window.addEventListener("mousemove", onMove, { passive: true })
-    window.addEventListener("resize", resize)
+    const onResize = () => { resize(); measureQuiet() }
+    window.addEventListener("resize", onResize)
     return () => {
       gsap.ticker.remove(frame)
+      qro?.disconnect()
       window.removeEventListener("mousemove", onMove)
-      window.removeEventListener("resize", resize)
+      window.removeEventListener("resize", onResize)
     }
-  }, [rgb])
+  }, [rgb, excludeId])
 
   return (
     <canvas
